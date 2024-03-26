@@ -1,0 +1,28 @@
+block_1{
+%d %t %s %m
+log_1[
+    "console"error
+    "console"information
+    "./tst_3"information
+    "./tst_4"trace
+]
+log_2[
+    "./tst_3"debug
+    "./tst_4"trace
+    "./tst_3"error
+]
+}
+block_2{
+%s %m
+log_1[
+    "console"error
+]
+log_2[
+    "console"information
+    "console"trace
+    "console"error
+    "console"warning
+    "console"critical
+    "console"debug
+]
+}
