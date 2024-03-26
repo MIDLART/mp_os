@@ -38,13 +38,13 @@ public:
         client_logger const &other);
 
     client_logger &operator=(
-        client_logger const &other) = delete;
+        client_logger const &other);
 
     client_logger(
-        client_logger &&other) noexcept = delete;
+        client_logger &&other) noexcept;
 
     client_logger &operator=(
-        client_logger &&other) noexcept = delete;
+        client_logger &&other) noexcept;
 
     ~client_logger() noexcept final;
 

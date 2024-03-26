@@ -8,7 +8,7 @@ int main(
     int argc,
     char *argv[])
 {
-    client_logger_builder new_logger("%d %t %s %m");
+    client_logger_builder new_logger("%d%t%s%m");
     //client_logger_builder new_logger;
 
 //    logger *log = new_logger.add_console_stream(logger::severity::information)

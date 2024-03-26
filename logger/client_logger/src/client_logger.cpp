@@ -35,7 +35,7 @@ client_logger::client_logger(
                         throw std::runtime_error("File cannot be opened");
                     }
                 }
-                catch (...)
+                catch (std::exception)
                 {
                     for (auto del_iter = data.begin(); del_iter != iter; ++del_iter)
                     {
@@ -54,38 +54,61 @@ client_logger::client_logger(
     }
 }
 
-//client_logger::client_logger(
-//        client_logger const &other)
-//{
-//    throw not_implemented("client_logger::client_logger(client_logger const &other)", "your code should be here...");
-//}
-//
-//client_logger &client_logger::operator=(
-//        client_logger const &other)
-//{
-//    throw not_implemented("client_logger &client_logger::operator=(client_logger const &other)", "your code should be here...");
-//}
-//
-//client_logger::client_logger(
-//        client_logger &&other) noexcept
-//{
-//    throw not_implemented("client_logger::client_logger(client_logger &&other) noexcept", "your code should be here...");
-//}
-//
-//client_logger &client_logger::operator=(
-//        client_logger &&other) noexcept
-//{
-//    throw not_implemented("client_logger &client_logger::operator=(client_logger &&other) noexcept", "your code should be here...");
-//}
+client_logger::client_logger(
+        client_logger const &other):
+        _log_struct(other._log_struct),
+        _streams(other._streams)
+{
+    for (auto stream : _streams)
+    {
+        _all_streams[stream.first].second++;
+    }
+}
+
+client_logger &client_logger::operator=(
+        client_logger const &other)
+{
+    for (auto &log_stream : _streams)
+    {
+        decrement_stream(log_stream.first);
+    }
+
+    _streams = other._streams;
+    _log_struct = other._log_struct;
+
+    for (auto &log_stream : _streams)
+    {
+        _all_streams[log_stream.first].second++;
+    }
+
+    return *this;
+}
+
+client_logger::client_logger(
+        client_logger &&other) noexcept:
+        _log_struct(std::move(other._log_struct)),
+        _streams(std::move(other._streams))
+{ }
+
+client_logger &client_logger::operator=(
+        client_logger &&other) noexcept
+{
+    for (auto &log_stream : _streams)
+    {
+        decrement_stream(log_stream.first);
+    }
+
+    _log_struct = std::move(other._log_struct);
+    _streams = std::move(other._streams);
+
+    return *this;
+}
 
 client_logger::~client_logger() noexcept
 {
     for (auto &log_stream : _streams)
     {
-        if (log_stream.first != "console")
-        {
-            decrement_stream(log_stream.first);
-        }
+        decrement_stream(log_stream.first);
     }
 }
 
@@ -100,7 +123,7 @@ std::string client_logger::log_string_parse (
     {
         if (_log_struct[i] == '%' && i < size - 1)
         {
-            i++;
+            ++i;
             switch (_log_struct[i])
             {
                 case 'd':
@@ -116,9 +139,13 @@ std::string client_logger::log_string_parse (
                     res += text + ' ';
                     break;
                 default:
-
+                    res += '%' + _log_struct[i];
                     break;
             }
+        }
+        else
+        {
+            res += _log_struct[i];
         }
     }
 
@@ -147,26 +174,16 @@ logger const *client_logger::log(
 
 void client_logger::decrement_stream(std::string const &file_path) const noexcept
 {
-    --(_all_streams[file_path].second);
-
-    if (_all_streams[file_path].second == 0)
+    if (file_path != "console")
     {
-        _all_streams[file_path].first->flush();
-        delete _all_streams[file_path].first;
+        --(_all_streams[file_path].second);
 
-        _all_streams.erase(file_path);
-    }
-}
+        if (_all_streams[file_path].second == 0)
+        {
+            _all_streams[file_path].first->flush();
+            delete _all_streams[file_path].first;
 
-void client_logger::decrement_stream(std::string const &file_path) const noexcept
-{
-    --(_all_streams[file_path].second);
-
-    if (_all_streams[file_path].second == 0)
-    {
-        _all_streams[file_path].first->flush();
-        delete _all_streams[file_path].first;
-
-        _all_streams.erase(file_path);
+            _all_streams.erase(file_path);
+        }
     }
 }

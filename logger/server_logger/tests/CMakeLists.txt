@@ -13,6 +13,9 @@ FetchContent_MakeAvailable(
         googletest)
 
 add_executable(
+        mp_os_lggr_srvr_lggr_unix_srvr
+        test_linux_server.cpp)
+add_executable(
         mp_os_lggr_srvr_lggr_tests
         server_logger_tests.cpp)
 target_link_libraries(

@@ -1,5 +1,5 @@
 block_1{
-%d %t %s %m
+%d%t%s%m
 log_1[
     "console"error
     "console"information
@@ -13,7 +13,7 @@ log_2[
 ]
 }
 block_2{
-%s %m
+%s%m
 log_1[
     "console"error
 ]

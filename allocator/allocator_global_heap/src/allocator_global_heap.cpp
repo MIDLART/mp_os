@@ -47,7 +47,7 @@ allocator_global_heap &allocator_global_heap::operator=(
 
     try
     {
-        allocated_memory = reinterpret_cast<void*> (new unsigned char (value_size * values_count)); // + sizeof(size_t)
+        allocated_memory = reinterpret_cast<void*> (new unsigned char (value_size * values_count) + sizeof(size_t));
     }
     catch (std::bad_alloc &err)
     {
@@ -71,7 +71,7 @@ void allocator_global_heap::deallocate(
         throw std::logic_error("Trying to delete part of allocator");
     }
 
-    delete(&at);
+    delete reinterpret_cast<unsigned char*>(at);
 
     debug_with_guard("allocator_global_heap::deallocate(void *at) end");
 }
