@@ -1,3 +1,4 @@
+#include <string>
 #include <sys/msg.h>
 #include <sys/unistd.h>
 
@@ -14,7 +15,7 @@ struct msg_t
     size_t packed_id;
     size_t packed_cnt;
     char file_path[256];
-    int severities;
+    int severity;
     char mtext[MAX_MSG_TEXT_SIZE];
 };
 
@@ -36,7 +37,10 @@ int main(
     msg.pid = getpid();
     msg.packed_id = 1;
     msg.packed_cnt = 1;
-    msg.severities = 2;
+    msg.severity = 2;
+
+    strcpy(msg.file_path, "");
+    strcpy(msg., "123");
 
     msgsnd(mq_descr, &msg, msg_max_size, 0);
 }

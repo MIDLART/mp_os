@@ -16,9 +16,9 @@ client_logger::client_logger(
     {
         const auto &log_elem = *iter;
 
-        if (iter->first == "console")
+        if (log_elem.first == "")
         {
-            _streams["console"] = std::make_pair(&std::cout, log_elem.second);
+            _streams[""] = std::make_pair(&std::cout, log_elem.second);
         }
         else
         {
@@ -35,14 +35,14 @@ client_logger::client_logger(
                         throw std::runtime_error("File cannot be opened");
                     }
                 }
-                catch (std::exception)
+                catch (std::exception &)
                 {
                     for (auto del_iter = data.begin(); del_iter != iter; ++del_iter)
                     {
                         decrement_stream(del_iter->first);
                     }
 
-                    throw;
+                    throw std::exception();
                 }
 
                 _all_streams[log_elem.first] = std::make_pair(new_stream, size_t(0));
@@ -174,7 +174,7 @@ logger const *client_logger::log(
 
 void client_logger::decrement_stream(std::string const &file_path) const noexcept
 {
-    if (file_path != "console")
+    if (file_path != "")
     {
         --(_all_streams[file_path].second);
 

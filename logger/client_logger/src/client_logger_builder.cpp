@@ -1,6 +1,7 @@
 #include <not_implemented.h>
 #include <filesystem>
 #include <fstream>
+#include ""
 
 #include "../include/client_logger.h"
 #include "../include/client_logger_builder.h"
@@ -29,7 +30,7 @@ logger_builder *client_logger_builder::add_file_stream(
 logger_builder *client_logger_builder::add_console_stream(
     logger::severity severity)
 {
-    _data["console"].insert(severity);
+    _data[""].insert(severity);
 
     return this;
 }
@@ -39,20 +40,23 @@ logger_builder* client_logger_builder::transform_with_configuration(
     std::string const &configuration_path)
 {
     std::ifstream configuration_file(configuration_file_path);
-    //configuration_file.open(configuration_file_path);
 
     if (!configuration_file.is_open())
     {
         throw std::runtime_error("File cannot be opened");
     }
 
-    std::istringstream input_str_stream(configuration_path);
-    std::string block;
-    std::string log;
-    getline(input_str_stream, block, '/');
-    getline(input_str_stream, log);
+//    std::istringstream input_str_stream(configuration_path);
+//    std::string block;
+//    std::string log;
+//    getline(input_str_stream, block, '/');
+//    getline(input_str_stream, log);
+//
+//    get_config_info(configuration_file, block, log);
 
-    get_config_info(configuration_file, block, log);
+    nlohman::json config;
+
+    configuration_file >> config;
 
     configuration_file.close();
 
@@ -134,7 +138,7 @@ void client_logger_builder::get_config_info(
 
             severity = get_severity(severity_str);
 
-            if (buf == "console")
+            if (buf == "")
             {
                 add_console_stream(severity);
             }
@@ -148,6 +152,13 @@ void client_logger_builder::get_config_info(
     {
         throw std::runtime_error("Invalid configuration path");
     }
+}
+
+void client_logger_builder::get_config_info(
+        std::ifstream &configuration_file,
+        std::string const &configuration_path)
+{
+
 }
 
 logger::severity client_logger_builder::get_severity(
