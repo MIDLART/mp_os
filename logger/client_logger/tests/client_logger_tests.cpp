@@ -17,7 +17,7 @@ int main(
 //            ->build();
 
     logger *log = new_logger.add_console_stream(logger::severity::information)
-            ->transform_with_configuration("C:\\Users\\User\\mp_os\\logger\\client_logger\\tests\\conf_1", "block_2/log_2")
+            ->transform_with_configuration("C:\\Users\\User\\mp_os\\logger\\client_logger\\tests\\conf_2.json", "block_1/log_1")
             ->build();
 
     log->information("information");

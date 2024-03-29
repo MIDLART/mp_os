@@ -16,7 +16,7 @@ client_logger::client_logger(
     {
         const auto &log_elem = *iter;
 
-        if (log_elem.first == "")
+        if (log_elem.first[0] == '\0')
         {
             _streams[""] = std::make_pair(&std::cout, log_elem.second);
         }
@@ -37,12 +37,14 @@ client_logger::client_logger(
                 }
                 catch (std::exception &)
                 {
+                    delete(new_stream);
+
                     for (auto del_iter = data.begin(); del_iter != iter; ++del_iter)
                     {
                         decrement_stream(del_iter->first);
                     }
 
-                    throw std::exception();
+                    throw;
                 }
 
                 _all_streams[log_elem.first] = std::make_pair(new_stream, size_t(0));
@@ -59,7 +61,7 @@ client_logger::client_logger(
         _log_struct(other._log_struct),
         _streams(other._streams)
 {
-    for (auto stream : _streams)
+    for (auto &stream : _streams)
     {
         _all_streams[stream.first].second++;
     }
@@ -158,7 +160,7 @@ logger const *client_logger::log(
 {
     std::string out_string = log_string_parse(text, severity);
 
-    for (auto cur_stream : _streams)
+    for (auto &cur_stream : _streams)
     {
         std::ostream &stream = *(cur_stream.second.first);
         auto &severities = cur_stream.second.second;
@@ -174,7 +176,7 @@ logger const *client_logger::log(
 
 void client_logger::decrement_stream(std::string const &file_path) const noexcept
 {
-    if (file_path != "")
+    if (file_path[0] == '\0')
     {
         --(_all_streams[file_path].second);
 

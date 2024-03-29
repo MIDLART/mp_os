@@ -5,6 +5,9 @@
 #include <map>
 #include <set>
 #include <exception>
+#include <queue>
+
+#include "nlohmann/json.hpp"
 
 class client_logger_builder final:
     public logger_builder
@@ -63,9 +66,18 @@ private:
             std::string const &severity_str);
 
     void get_config_info(
-            std::ifstream &configuration_file,
-            std::string const &block,
-            std::string const &log);
+            nlohmann::json &config,
+            std::string const &configuration_path);
+
+    void get_substr_queue(
+            std::string const &str,
+            std::queue<std::string> &queue,
+            char separator);
+
+//    void get_config_info(
+//            std::ifstream &configuration_file,
+//            std::string const &block,
+//            std::string const &log);
 };
 
 #endif //MATH_PRACTICE_AND_OPERATING_SYSTEMS_CLIENT_LOGGER_BUILDER_H

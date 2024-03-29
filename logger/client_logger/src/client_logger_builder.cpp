@@ -1,7 +1,6 @@
 #include <not_implemented.h>
 #include <filesystem>
 #include <fstream>
-#include ""
 
 #include "../include/client_logger.h"
 #include "../include/client_logger_builder.h"
@@ -54,9 +53,9 @@ logger_builder* client_logger_builder::transform_with_configuration(
 //
 //    get_config_info(configuration_file, block, log);
 
-    nlohman::json config;
+    nlohmann::json config = nlohmann::json::parse(configuration_file);
 
-    configuration_file >> config;
+    get_config_info(config, configuration_path);
 
     configuration_file.close();
 
@@ -85,60 +84,46 @@ logger_builder *client_logger_builder::change_log_struct(
 }
 
 void client_logger_builder::get_config_info(
-        std::ifstream &configuration_file,
-        std::string const &block,
-        std::string const &log)
+        nlohmann::json &config,
+        std::string const &configuration_path)
 {
     std::string buf;
     std::string severity_str;
     logger::severity severity;
-    int flag = 1;
 
-    while (!configuration_file.eof())
+    std::queue<std::string> queue;
+
+    get_substr_queue(configuration_path, queue, '/');
+
+    while (!queue.empty())
     {
-        getline(configuration_file, buf, '{');
-        if (buf == block)
+        buf = queue.front();
+        queue.pop();
+
+        if (config.find(buf) != config.end())
         {
-            getline(configuration_file, buf);
-            getline(configuration_file, _log_struct);
-
-            while (!configuration_file.eof())
-            {
-                getline(configuration_file, buf, '[');
-                if (buf == log)
-                {
-                    getline(configuration_file, buf);
-
-                    flag = 0;
-                    break;
-                }
-
-                getline(configuration_file, buf, ']');
-                getline(configuration_file, buf);
-            }
-
-            break;
+            config = config[buf]; // 1 pass??
         }
-
-        getline(configuration_file, buf, '}');
-        getline(configuration_file, buf);
+        else
+        {
+            throw std::runtime_error("Configuration was not found");
+        }
     }
 
-    if (!flag)
-    {
-        while (!configuration_file.eof() && buf != "]")
-        {
-            getline(configuration_file, buf, '"');
-            if (buf[0] == ']')
-            {
-                break;
-            }
-            getline(configuration_file, buf, '"');
-            getline(configuration_file, severity_str);
+    _log_struct = config["_log_struct"];
 
+    config = config["files"];
+
+    for (auto& file : config.items())
+    {
+        buf = file.key();
+
+        for (auto& severity_iter : file.value())
+        {
+            severity_str = severity_iter;
             severity = get_severity(severity_str);
 
-            if (buf == "")
+            if (buf[0] == '\0')
             {
                 add_console_stream(severity);
             }
@@ -148,18 +133,105 @@ void client_logger_builder::get_config_info(
             }
         }
     }
-    else
-    {
-        throw std::runtime_error("Invalid configuration path");
-    }
 }
 
-void client_logger_builder::get_config_info(
-        std::ifstream &configuration_file,
-        std::string const &configuration_path)
+void client_logger_builder::get_substr_queue(
+        std::string const &str,
+        std::queue<std::string> &queue,
+        char separator)
 {
+    std::string substr;
+    size_t i = 0, j = 0;
 
+    while (str[i] != '\0')
+    {
+        if (str[i] == separator)
+        {
+            queue.push(substr);
+            j = 0;
+            substr.clear();
+        }
+        else
+        {
+            substr.replace(j, 1, 1, str[i]);
+            ++j;
+        }
+
+        ++i;
+    }
+
+    queue.push(substr);
 }
+
+//void client_logger_builder::get_config_info(
+//        std::ifstream &configuration_file,
+//        std::string const &block,
+//        std::string const &log)
+//{
+//    std::string buf;
+//    std::string severity_str;
+//    logger::severity severity;
+//    int flag = 1;
+//
+//    while (!configuration_file.eof())
+//    {
+//        getline(configuration_file, buf, '{');
+//        if (buf == block)
+//        {
+//            getline(configuration_file, buf);
+//            getline(configuration_file, _log_struct);
+//
+//            while (!configuration_file.eof())
+//            {
+//                getline(configuration_file, buf, '[');
+//                if (buf == log)
+//                {
+//                    getline(configuration_file, buf);
+//
+//                    flag = 0;
+//                    break;
+//                }
+//
+//                getline(configuration_file, buf, ']');
+//                getline(configuration_file, buf);
+//            }
+//
+//            break;
+//        }
+//
+//        getline(configuration_file, buf, '}');
+//        getline(configuration_file, buf);
+//    }
+//
+//    if (!flag)
+//    {
+//        while (!configuration_file.eof() && buf != "]")
+//        {
+//            getline(configuration_file, buf, '"');
+//            if (buf[0] == ']')
+//            {
+//                break;
+//            }
+//            getline(configuration_file, buf, '"');
+//            getline(configuration_file, severity_str);
+//
+//            severity = get_severity(severity_str);
+//
+//            if (buf == "")
+//            {
+//                add_console_stream(severity);
+//            }
+//            else
+//            {
+//                add_file_stream(buf, severity);
+//            }
+//        }
+//    }
+//    else
+//    {
+//        throw std::runtime_error("Invalid configuration path");
+//    }
+//}
 
 logger::severity client_logger_builder::get_severity(
         std::string const &severity_str)

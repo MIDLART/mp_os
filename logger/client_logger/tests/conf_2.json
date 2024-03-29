@@ -3,8 +3,10 @@
     "log_1": {
       "_log_struct": "%d%t%s%m",
       "files": {
-        "": "error",
-        "": "information",
+        "": [
+          "error",
+          "information"
+        ],
         "./tst_3": "information",
         "./tst_4": "trace"
       }
@@ -28,12 +30,14 @@
     "log_2": {
       "_log_struct": "%s%m",
       "files": {
-        "": "information",
-        "": "trace",
-        "": "error",
-        "": "warning",
-        "": "critical",
-        "": "debug"
+        "": [
+        "information",
+        "trace",
+        "error",
+        "warning",
+        "critical",
+        "debug"
+        ]
       }
     }
   }
