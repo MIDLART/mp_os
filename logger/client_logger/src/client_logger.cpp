@@ -70,17 +70,18 @@ client_logger::client_logger(
 client_logger &client_logger::operator=(
         client_logger const &other)
 {
-    for (auto &log_stream : _streams)
+    if (this != &other)
     {
-        decrement_stream(log_stream.first);
-    }
+        for (auto &log_stream: _streams) {
+            decrement_stream(log_stream.first);
+        }
 
-    _streams = other._streams;
-    _log_struct = other._log_struct;
+        _streams = other._streams;
+        _log_struct = other._log_struct;
 
-    for (auto &log_stream : _streams)
-    {
-        _all_streams[log_stream.first].second++;
+        for (auto &log_stream: _streams) {
+            _all_streams[log_stream.first].second++;
+        }
     }
 
     return *this;
@@ -95,13 +96,16 @@ client_logger::client_logger(
 client_logger &client_logger::operator=(
         client_logger &&other) noexcept
 {
-    for (auto &log_stream : _streams)
+    if (this != &other)
     {
-        decrement_stream(log_stream.first);
-    }
+        for (auto &log_stream : _streams)
+        {
+            decrement_stream(log_stream.first);
+        }
 
-    _log_struct = std::move(other._log_struct);
-    _streams = std::move(other._streams);
+        _log_struct = std::move(other._log_struct);
+        _streams = std::move(other._streams);
+    }
 
     return *this;
 }
@@ -178,12 +182,14 @@ void client_logger::decrement_stream(std::string const &file_path) const noexcep
 {
     if (file_path[0] == '\0')
     {
-        --(_all_streams[file_path].second);
+        auto iter = _all_streams[file_path];
 
-        if (_all_streams[file_path].second == 0)
+        --(iter.second);
+
+        if (iter.second == 0)
         {
-            _all_streams[file_path].first->flush();
-            delete _all_streams[file_path].first;
+            iter.first->flush();
+            delete iter.first;
 
             _all_streams.erase(file_path);
         }
