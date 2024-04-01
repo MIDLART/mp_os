@@ -2,6 +2,7 @@
 #define MATH_PRACTICE_AND_OPERATING_SYSTEMS_LOGGER_BUILDER_H
 
 #include "logger.h"
+#include <queue>
 
 class logger_builder
 {
@@ -31,6 +32,14 @@ protected:
 
     static logger::severity string_to_severity(
         std::string const &severity_string);
+
+    static logger::severity get_severity(
+            std::string const &severity_str);
+
+    static void get_substr_queue(
+            std::string const &str,
+            std::queue<std::string> &queue,
+            char separator);
 
 };
 

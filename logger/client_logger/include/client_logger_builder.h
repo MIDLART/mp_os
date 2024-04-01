@@ -62,17 +62,17 @@ public:
             std::string const &log_struct);
 
 private:
-    logger::severity get_severity(
-            std::string const &severity_str);
+//    logger::severity get_severity(
+//            std::string const &severity_str);
 
     void get_config_info(
             nlohmann::json &config,
             std::string const &configuration_path);
 
-    void get_substr_queue(
-            std::string const &str,
-            std::queue<std::string> &queue,
-            char separator);
+//    void get_substr_queue(
+//            std::string const &str,
+//            std::queue<std::string> &queue,
+//            char separator);
 
 //    void get_config_info(
 //            std::ifstream &configuration_file,
