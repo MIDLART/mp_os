@@ -46,7 +46,7 @@ allocator_global_heap &allocator_global_heap::operator=(
     size_t values_count)
 {
     trace_with_guard("allocator_global_heap::allocate(size_t value_size, size_t values_count) called (value_size = " +
-                     std::to_string(value_size) + ", values_count = " + std::to_string(values_count) + ")");
+                     std::to_string(value_size) + ", values_count = " + std::to_string(values_count) + ")")->
     debug_with_guard("allocator_global_heap::allocate(size_t value_size, size_t values_count) called (value_size = " +
                      std::to_string(value_size) + ", values_count = " + std::to_string(values_count) + ")");
 
@@ -59,7 +59,7 @@ allocator_global_heap &allocator_global_heap::operator=(
         allocated_memory = reinterpret_cast<unsigned char*>(
                 ::operator new(size + meta_size));
     }
-    catch (std::bad_alloc &)
+    catch (std::bad_alloc const &)
     {
         error_with_guard("void *allocator_global_heap::allocate bad_alloc (size = "
             + std::to_string(size) + ")");
@@ -69,7 +69,7 @@ allocator_global_heap &allocator_global_heap::operator=(
     *reinterpret_cast<allocator_global_heap**>(allocated_memory) = this;
     *reinterpret_cast<size_t*>(allocated_memory + sizeof(allocator_global_heap*)) = size;
 
-    trace_with_guard("void *allocator_global_heap::allocate successfully ended");
+    trace_with_guard("void *allocator_global_heap::allocate successfully ended")->
     debug_with_guard("void *allocator_global_heap::allocate successfully ended");
 
     return reinterpret_cast<void*>(allocated_memory + meta_size);
@@ -78,7 +78,7 @@ allocator_global_heap &allocator_global_heap::operator=(
 void allocator_global_heap::deallocate(
     void *at)
 {
-    trace_with_guard("allocator_global_heap::deallocate(void *at) called");
+    trace_with_guard("allocator_global_heap::deallocate(void *at) called")->
     debug_with_guard("allocator_global_heap::deallocate(void *at) called");
 
     auto allocated_memory = reinterpret_cast<unsigned char*>(at) - sizeof(allocator_global_heap*) - sizeof(size_t);
@@ -114,7 +114,7 @@ void allocator_global_heap::deallocate(
 
     ::operator delete (allocated_memory);
 
-    trace_with_guard("allocator_global_heap::deallocate(void *at) ended");
+    trace_with_guard("allocator_global_heap::deallocate(void *at) ended")->
     debug_with_guard("allocator_global_heap::deallocate(void *at) ended");
 }
 

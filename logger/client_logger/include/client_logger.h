@@ -25,7 +25,7 @@ private:
 private:
     client_logger(
             std::map<std::string, std::set<logger::severity>> const &data,
-            std::string const &log_struct);
+            std::string log_struct);
 
 private:
     std::string log_string_parse(

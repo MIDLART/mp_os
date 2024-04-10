@@ -36,6 +36,18 @@ TEST(positiveTests, test1)
             {
                 "allocator_boundary_tags_tests_logs_positive_test_plain_usage.txt",
                 logger::severity::information
+            },
+            {
+                    "", logger::severity::trace
+            },
+            {
+                    "", logger::severity::debug
+            },
+            {
+                    "", logger::severity::information
+            },
+            {
+                    "", logger::severity::error
             }
         });
     allocator *subject = new allocator_boundary_tags(sizeof(int) * 40, nullptr, logger, allocator_with_fit_mode::fit_mode::first_fit);
@@ -74,6 +86,18 @@ TEST(positiveTests, test2)
             {
                 "allocator_boundary_tags_tests_logs_false_positive_test_1.txt",
                 logger::severity::information
+            },
+            {
+                    "", logger::severity::trace
+            },
+            {
+                    "", logger::severity::debug
+            },
+            {
+                    "", logger::severity::information
+            },
+            {
+                    "", logger::severity::error
             }
         });
     allocator *allocator_instance = new allocator_boundary_tags(sizeof(unsigned char) * 3000, nullptr, logger_instance, allocator_with_fit_mode::fit_mode::first_fit);
@@ -110,6 +134,18 @@ TEST(falsePositiveTests, test1)
             {
                 "allocator_boundary_tags_tests_logs_false_positive_test_2.txt",
                 logger::severity::information
+            },
+            {
+                    "", logger::severity::trace
+            },
+            {
+                    "", logger::severity::debug
+            },
+            {
+                    "", logger::severity::information
+            },
+            {
+                    "", logger::severity::error
             }
         });
     allocator *allocator_instance = new allocator_boundary_tags(3000, nullptr, logger_instance, allocator_with_fit_mode::fit_mode::first_fit);

@@ -8,8 +8,8 @@ std::unordered_map<std::string, std::pair<std::ostream *, size_t>> client_logger
 
 client_logger::client_logger(
         std::map<std::string, std::set<logger::severity>> const &data,
-        std::string const &log_struct):
-        _log_struct(log_struct)
+        std::string log_struct):
+        _log_struct(std::move(log_struct))
 {
 
     for (auto iter = data.begin(); iter != data.end(); ++iter)
@@ -22,6 +22,8 @@ client_logger::client_logger(
         }
         else
         {
+            auto elem_pair = _all_streams[log_elem.first];
+
             if (!_all_streams.count(log_elem.first))
             {
                 std::ofstream *new_stream = nullptr;
@@ -35,9 +37,9 @@ client_logger::client_logger(
                         throw std::runtime_error("File cannot be opened");
                     }
                 }
-                catch (std::exception &)
+                catch (std::exception const &)
                 {
-                    delete(new_stream);
+                    delete new_stream;
 
                     for (auto del_iter = data.begin(); del_iter != iter; ++del_iter)
                     {
@@ -47,11 +49,12 @@ client_logger::client_logger(
                     throw;
                 }
 
-                _all_streams[log_elem.first] = std::make_pair(new_stream, size_t(0));
+
+                elem_pair = std::move(std::make_pair(new_stream, size_t(0)));
             }
 
-            _all_streams[log_elem.first].second++;
-            _streams[log_elem.first] = std::make_pair(_all_streams[log_elem.first].first, log_elem.second);
+            elem_pair.second++;
+            _streams[log_elem.first] = std::make_pair(elem_pair.first, log_elem.second);
         }
     }
 }
@@ -180,7 +183,7 @@ logger const *client_logger::log(
 
 void client_logger::decrement_stream(std::string const &file_path) const noexcept
 {
-    if (file_path[0] == '\0')
+    if (file_path[0] != '\0')
     {
         auto iter = _all_streams[file_path];
 
