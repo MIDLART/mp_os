@@ -1,5 +1,5 @@
 #include <not_implemented.h>
-#include <sstream> ///
+#include <sstream>
 
 #include "../include/allocator_boundary_tags.h"
 
@@ -7,12 +7,17 @@ allocator_boundary_tags::~allocator_boundary_tags()
 {
     trace_with_guard(get_typename() + "::~allocator_boundary_tags() called");
 
+    logger* logger = get_logger();
+
     get_mutex().~mutex();
     deallocate_with_guard(_trusted_memory);
 
     trace_with_guard(get_typename() + "::~allocator_boundary_tags() finished");
 
-    //logger->trace(get_typename() + "::~allocator_boundary_tags() finished");
+    if (logger)
+    {
+        logger->trace(get_typename() + "::~allocator_boundary_tags() finished");
+    }
 }
 
 allocator_boundary_tags::allocator_boundary_tags(
@@ -68,13 +73,11 @@ allocator_boundary_tags::allocator_boundary_tags(
         throw std::logic_error("Cannot initialize allocator of this size");
     }
 
-    _trusted_memory = parent_allocator;
-
     auto size = space_size + get_meta_size();
 
     try
     {
-        if (_trusted_memory == nullptr)
+        if (parent_allocator == nullptr)
         {
             _trusted_memory = ::operator new(space_size + get_meta_size());
         }
@@ -88,8 +91,8 @@ allocator_boundary_tags::allocator_boundary_tags(
     {
         if (logger != nullptr)
         {
-            logger->error(get_typename() + "::allocator_boundary_tags(size_t, allocator *, logger *, fit_mode) : " +
-                "bad alloc occured while trying to allocate " + std::to_string(size) + "bytes.");
+            logger->error(get_typename() + "::allocator_boundary_tags(size_t, allocator *, logger *, fit_mode) " +
+                "bad alloc occured while trying to allocate " + std::to_string(size) + "bytes");
         }
 
         throw;
@@ -115,7 +118,7 @@ allocator_boundary_tags::allocator_boundary_tags(
     *reinterpret_cast<block_size_t*>(ptr) = space_size;
     ptr += sizeof(block_size_t);
 
-    *reinterpret_cast<block_pointer_t *>(ptr) = nullptr;
+    *reinterpret_cast<block_pointer_t*>(ptr) = nullptr;
 
     trace_with_guard(get_typename() + "::allocator_boundary_tags(size_t, allocator *, logger *, allocator_with_fit_mode::fit_mode) finished");
 }
@@ -133,8 +136,8 @@ allocator_boundary_tags::allocator_boundary_tags(
     block_size_t req_size = value_size * values_count;
     block_size_t block_size = req_size + get_block_meta_size();
 
-    block_pointer_t prev = nullptr;
     block_pointer_t target_block = nullptr;
+    block_pointer_t prev = nullptr;
     block_pointer_t next = nullptr;
     block_size_t target_size = 0;
 
@@ -150,7 +153,7 @@ allocator_boundary_tags::allocator_boundary_tags(
     else
     {
         cur_size = reinterpret_cast<unsigned char*>(cur_block) - get_block_meta_size() -
-                reinterpret_cast<unsigned char*>(_trusted_memory) + get_meta_size();
+                reinterpret_cast<unsigned char*>(_trusted_memory) - get_meta_size();
     }
 
     if (cur_size >= block_size)
@@ -160,6 +163,7 @@ allocator_boundary_tags::allocator_boundary_tags(
     }
 
     auto fit = get_fit_mode();
+    unsigned char *block_end;
     unsigned char *block_begin;
 
     while (cur_block != nullptr)
@@ -168,16 +172,18 @@ allocator_boundary_tags::allocator_boundary_tags(
 
         cur_block = get_next_block(cur_block);
 
+        block_begin = reinterpret_cast<unsigned char *>(prev_block) - get_block_size(prev_block);
+
         if (cur_block != nullptr)
         {
-            block_begin = reinterpret_cast<unsigned char *>(cur_block) - get_block_meta_size();
+            block_end = reinterpret_cast<unsigned char *>(cur_block) - get_block_meta_size();
         }
         else
         {
-            block_begin = reinterpret_cast<unsigned char*>(_trusted_memory) + get_meta_size() + get_allocator_size();
+            block_end = reinterpret_cast<unsigned char*>(_trusted_memory) + get_meta_size() + get_allocator_size();
         }
 
-        cur_size = block_begin - reinterpret_cast<unsigned char *>(prev_block) - get_block_size(prev_block);
+        cur_size = block_end - block_begin;
 
         if ((cur_size >= block_size) && (target_block == nullptr ||
             (fit == fit_mode::the_best_fit && (cur_size < target_size)) ||
@@ -239,7 +245,7 @@ allocator_boundary_tags::allocator_boundary_tags(
 
     debug_with_guard(get_typename() + "::allocate(size_t, size_t) : allocated " + std::to_string(req_size) +
                      "(+ meta: " + std::to_string(get_block_meta_size()) + ") bytes");
-    //debug_blocks_info(get_typename() + "::allocate(size_t, size_t)");
+    debug_blocks_info(get_typename() + "::allocate(size_t, size_t)");
     information_with_guard(get_typename() + "::allocate(size_t, size_t) free space left: " +
                            std::to_string(get_free_space()) + " bytes")->
         trace_with_guard(get_typename() + "::allocate(size_t, size_t) finished")->
@@ -251,8 +257,8 @@ allocator_boundary_tags::allocator_boundary_tags(
 void allocator_boundary_tags::deallocate(
     void *at)
 {
-    trace_with_guard(get_typename() + "::deallocate(void *) called.")
-            ->debug_with_guard(get_typename() + "::deallocate(void *) called.");
+    trace_with_guard(get_typename() + "::deallocate(void *) called")
+            ->debug_with_guard(get_typename() + "::deallocate(void *) called");
 
     std::lock_guard<std::mutex> lock (get_mutex());
 
@@ -261,12 +267,10 @@ void allocator_boundary_tags::deallocate(
         return;
     }
 
-    unsigned char* mem_begin = reinterpret_cast<unsigned char*>(
-                                       _trusted_memory) + get_meta_size();
-    unsigned char* mem_end = reinterpret_cast<unsigned char*>(
-                                     _trusted_memory) + get_meta_size() + get_space(nullptr);
+    unsigned char* begin = reinterpret_cast<unsigned char*>(_trusted_memory) + get_meta_size();
+    unsigned char* end = begin + get_allocator_size();
 
-    if (at < mem_begin || at >= mem_end || get_block_allocator(at) != this)
+    if (at < begin || at >= end || get_block_allocator(at) != this)
     {
         error_with_guard(get_typename() + "::deallocate(void *) tried to deallocate non-related memory");
         throw std::logic_error("try of deallocation non-related memory");
@@ -275,15 +279,15 @@ void allocator_boundary_tags::deallocate(
     block_size_t size = get_block_size(at);
     block_pointer_t prev = get_prev_block(at);
     block_pointer_t next = get_next_block(at);
-    //std::string dump = get_block_dump(at, size);
+    std::string dump = get_block_dump(at, size);
 
-//    if (prev == nullptr)
-//    {
-//        get_head_block() = next;
-//    }
     if (prev != nullptr)
     {
         get_next_block(prev) = next;
+    }
+    else
+    {
+        get_head_block() = next;
     }
 
     if (next != nullptr)
@@ -293,8 +297,13 @@ void allocator_boundary_tags::deallocate(
 
     get_free_space() += get_block_meta_size() + size;
 
-    trace_with_guard(get_typename() + "::deallocate(void *) finished.")
-            ->debug_with_guard(get_typename() + "::deallocate(void *) finished.");
+    debug_with_guard(get_typename() + "::deallocate(void *) deallocated " + std::to_string(size)
+                     + "(+ meta: " + std::to_string(get_block_meta_size()) + ") bytes" + dump);
+    debug_blocks_info(get_typename() + "::deallocate(void *)");
+    information_with_guard(get_typename() + "::deallocate(void *) free space left: " +
+                           std::to_string(get_free_space()) + " bytes.")->
+        trace_with_guard(get_typename() + "::deallocate(void *) finished")->
+        debug_with_guard(get_typename() + "::deallocate(void *) finished");
 }
 
 inline void allocator_boundary_tags::set_fit_mode(
@@ -309,11 +318,85 @@ std::vector<allocator_test_utils::block_info> allocator_boundary_tags::get_block
 
     std::lock_guard<std::mutex> lock (get_mutex());
 
-    ////
-
-
+    auto blocks = create_blocks_info();
 
     trace_with_guard(get_typename() + "::get_blocks_info() finished");
+
+    return blocks;
+}
+
+std::vector<allocator_test_utils::block_info> allocator_boundary_tags::create_blocks_info() const noexcept
+{
+    std::vector<allocator_test_utils::block_info> blocks(0);
+
+    block_pointer_t cur_block = get_head_block();
+    block_pointer_t prev_block;
+    block_size_t free_size, occupied_size;
+
+    if (cur_block == nullptr)
+    {
+        free_size = get_allocator_size();
+    }
+    else
+    {
+        free_size = reinterpret_cast<unsigned char*>(cur_block) - get_block_meta_size() -
+                    reinterpret_cast<unsigned char*>(_trusted_memory) - get_meta_size();
+    }
+
+    if (free_size)
+    {
+        blocks.push_back({.block_size = free_size, .is_block_occupied = false});
+    }
+
+    unsigned char *block_begin;
+
+    while (cur_block != nullptr)
+    {
+        prev_block = cur_block;
+
+        cur_block = get_next_block(cur_block);
+
+        if (cur_block != nullptr)
+        {
+            block_begin = reinterpret_cast<unsigned char *>(cur_block) - get_block_meta_size();
+        }
+        else
+        {
+            block_begin = reinterpret_cast<unsigned char*>(_trusted_memory) + get_meta_size() + get_allocator_size();
+        }
+
+        free_size = block_begin - reinterpret_cast<unsigned char *>(prev_block) - get_block_size(prev_block);
+        occupied_size = get_block_meta_size() + get_block_size(prev_block);
+
+        blocks.push_back({.block_size = occupied_size, .is_block_occupied = true});
+
+        if (free_size)
+        {
+            blocks.push_back({.block_size = free_size, .is_block_occupied = false});
+        }
+    }
+
+    return blocks;
+}
+
+void allocator_boundary_tags::debug_blocks_info(std::string call_function_name) const
+{
+    std::ostringstream str_stream;
+    auto blocks_info = create_blocks_info();
+
+    for (auto data : blocks_info)
+    {
+        if (data.is_block_occupied)
+        {
+            str_stream << " occup " << data.block_size - get_block_meta_size() << " |";
+        }
+        else
+        {
+            str_stream << " avail " << data.block_size << " |";
+        }
+    }
+
+    debug_with_guard(call_function_name + " : memory map: |" + str_stream.str());
 }
 
 inline allocator *allocator_boundary_tags::get_allocator() const

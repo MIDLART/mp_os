@@ -2,6 +2,7 @@
 #define MATH_PRACTICE_AND_OPERATING_SYSTEMS_ALLOCATOR_H
 
 #include <cstddef>
+#include <string>
 
 class allocator
 {
@@ -38,6 +39,12 @@ public:
     
     virtual void deallocate(
         void *at) = 0;
+
+protected:
+
+    static std::string get_block_dump(
+            block_pointer_t block,
+            block_size_t size);
     
 };
 

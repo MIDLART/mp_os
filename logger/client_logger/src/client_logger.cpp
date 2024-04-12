@@ -24,7 +24,7 @@ client_logger::client_logger(
         {
             auto elem_pair = _all_streams[log_elem.first];
 
-            if (!_all_streams.count(log_elem.first))
+            if (!elem_pair.second)
             {
                 std::ofstream *new_stream = nullptr;
 

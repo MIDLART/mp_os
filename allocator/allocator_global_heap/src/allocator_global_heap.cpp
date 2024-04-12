@@ -93,7 +93,6 @@ void allocator_global_heap::deallocate(
 
     std::ostringstream str_stream;
 
-
     str_stream << "dump: ";
 
     if(size == 0)

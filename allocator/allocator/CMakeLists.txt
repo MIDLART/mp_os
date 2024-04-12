@@ -4,7 +4,9 @@ project(mp_os_allctr_allctr)
 add_library(
         mp_os_allctr_allctr
         src/allocator_guardant.cpp
-        src/allocator_test_utils.cpp)
+        src/allocator_test_utils.cpp
+        src/allocator.cpp
+        src/allocator.cpp)
 target_include_directories(
         mp_os_allctr_allctr
         PUBLIC

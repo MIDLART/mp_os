@@ -18,27 +18,27 @@ class allocator_boundary_tags final:
 {
 
 private:
-    
+
     void *_trusted_memory;
 
 public:
-    
+
     ~allocator_boundary_tags() override;
-    
+
     allocator_boundary_tags(
         allocator_boundary_tags const &other) = delete;
-    
+
     allocator_boundary_tags &operator=(
         allocator_boundary_tags const &other) = delete;
-    
+
     allocator_boundary_tags(
         allocator_boundary_tags &&other) noexcept;
-    
+
     allocator_boundary_tags &operator=(
         allocator_boundary_tags &&other) noexcept;
 
 public:
-    
+
     explicit allocator_boundary_tags(
         size_t space_size,
         allocator *parent_allocator = nullptr,
@@ -46,21 +46,21 @@ public:
         allocator_with_fit_mode::fit_mode allocate_fit_mode = allocator_with_fit_mode::fit_mode::first_fit);
 
 public:
-    
+
     [[nodiscard]] void *allocate(
         size_t value_size,
         size_t values_count) override;
-    
+
     void deallocate(
         void *at) override;
 
 public:
-    
+
     inline void set_fit_mode(
         allocator_with_fit_mode::fit_mode mode) override;
 
 public:
-    
+
     std::vector<allocator_test_utils::block_info> get_blocks_info() const noexcept override;
 
 private:
@@ -78,7 +78,7 @@ private:
     inline allocator::block_size_t &get_free_space() const;
 
 private:
-    
+
     inline std::string get_typename() const noexcept override;
 
 private:
@@ -103,7 +103,12 @@ private:
     inline allocator *&get_block_allocator(
             block_pointer_t block) const;
 
-    
+private:
+
+    void debug_blocks_info(std::string call_function_name) const;
+
+    std::vector<allocator_test_utils::block_info> create_blocks_info() const noexcept;
+
 };
 
 #endif //MATH_PRACTICE_AND_OPERATING_SYSTEMS_ALLOCATOR_ALLOCATOR_BOUNDARY_TAGS_H
