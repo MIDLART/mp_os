@@ -12,7 +12,6 @@ allocator_boundary_tags::~allocator_boundary_tags()
     get_mutex().~mutex();
     deallocate_with_guard(_trusted_memory);
 
-    trace_with_guard(get_typename() + "::~allocator_boundary_tags() finished");
 
     if (logger)
     {
@@ -166,13 +165,13 @@ allocator_boundary_tags::allocator_boundary_tags(
     unsigned char *block_end;
     unsigned char *block_begin;
 
-    while (cur_block != nullptr)
+    while (cur_block != nullptr && !(fit == fit_mode::first_fit && target_block))
     {
         prev_block = cur_block;
 
         cur_block = get_next_block(cur_block);
 
-        block_begin = reinterpret_cast<unsigned char *>(prev_block) - get_block_size(prev_block);
+        block_begin = reinterpret_cast<unsigned char *>(prev_block) + get_block_size(prev_block);
 
         if (cur_block != nullptr)
         {
@@ -194,10 +193,6 @@ allocator_boundary_tags::allocator_boundary_tags(
             target_size = cur_size;
         }
 
-        if (fit == fit_mode::first_fit && target_block)
-        {
-            break;
-        }
     }
 
     if (target_block == nullptr)
