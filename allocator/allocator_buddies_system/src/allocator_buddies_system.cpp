@@ -295,8 +295,36 @@ void allocator_buddies_system::deallocate(
     unsigned char mask = 0b01111111;
 
     get_block_status_and_degree(block) = get_block_degree(block) & mask;
-    get_prev_block(block) = get_prev_block(buddy);
-    get_next_block(block) = get_next_block(buddy);
+
+    if (get_block_degree(block) < allocator_degree && !get_block_status(buddy))
+    {
+        get_prev_block(block) = get_prev_block(buddy);
+        get_next_block(block) = get_next_block(buddy);
+    }
+    else
+    {
+        block_pointer_t cur_avail = get_head_block();
+        block_pointer_t next_avail = nullptr;
+        if (cur_avail != nullptr)
+        {
+            next_avail = get_next_block(cur_avail);
+
+            if (cur_avail > block)
+            {
+                next_avail = cur_avail;
+                cur_avail = nullptr;
+            }
+        }
+
+        while (next_avail != nullptr && next_avail < block)
+        {
+            cur_avail = next_avail;
+            next_avail = get_next_block(next_avail);
+        }
+
+        get_next_block(block) = next_avail;
+        get_prev_block(block) = cur_avail;
+    }
 
 
     while (get_block_degree(block) < allocator_degree &&

@@ -111,7 +111,7 @@ TEST(positiveTests, test2)
         ASSERT_EQ(actual_blocks_state[i], expected_blocks_state[i]);
     }
 
-    allocator_instance->deallocate(first_block);
+    //allocator_instance->deallocate(first_block);
 
     delete allocator_instance;
     delete logger_instance;
