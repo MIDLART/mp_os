@@ -78,7 +78,7 @@ allocator_boundary_tags::allocator_boundary_tags(
     {
         if (parent_allocator == nullptr)
         {
-            _trusted_memory = ::operator new(space_size + get_meta_size());
+            _trusted_memory = ::operator new(size);
         }
         else
         {
