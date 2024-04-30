@@ -30,9 +30,9 @@ protected:
 
         tvalue value;
 
-        node *left_subtree;
+        node *left_subtree = nullptr;
 
-        node *right_subtree;
+        node *right_subtree = nullptr;
 
     public:
 
@@ -63,6 +63,7 @@ public:
     {
 
         friend class const_iterator;
+        friend class iterator;
         friend void binary_search_tree<tkey, tvalue>::inject_additional_data(
                 iterator_data *,
                 node *) const;
@@ -215,6 +216,8 @@ private:
                 tvalue &&value) noexcept;
 
     };
+
+public:
 
     class prefix_iterator final:
             public iterator
@@ -785,9 +788,6 @@ protected:
                 tkey const &key,
                 tvalue &&value);
 
-//        void set_insertion_strategy(
-//                typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept;
-
     private:
 
         [[nodiscard]] allocator *get_allocator() const noexcept final;
@@ -821,7 +821,7 @@ protected:
             public allocator_guardant
     {
 
-    private:
+    public:
 
         binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy _disposal_strategy;
 
@@ -836,21 +836,8 @@ protected:
         tvalue dispose(
                 tkey const &key);
 
-        void set_disposal_strategy(
-                typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept;
-
-//    private: // TODO: !=std::swap?
-//
-//        template<
-//                typename T>
-//        inline void swap(
-//                T &&one,
-//                T &&another)
-//        {
-//            T temp = std::move(one);
-//            one = std::move(another);
-//            another = std::move(temp);
-//        }
+//        void set_disposal_strategy(
+//                typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept;
 
     private:
 
@@ -906,7 +893,7 @@ public:
 protected:
 
     void clear(
-            node *&subtree_root);
+            node **subtree_root);
 
     node *copy(
             node const *subtree_root);
@@ -1289,6 +1276,7 @@ binary_search_tree<tkey, tvalue>::iterator_data::~iterator_data() noexcept
 
     ::operator delete(_key);
     _key = nullptr;
+
     ::operator delete(_value);
     _value = nullptr;
 
@@ -1488,7 +1476,7 @@ template<
         typename tvalue>
 binary_search_tree<tkey, tvalue>::const_iterator::~const_iterator() noexcept
 {
-    delete _data;
+    // delete _data; // TODO error
 }
 
 template<
@@ -2974,7 +2962,7 @@ template<
         typename tvalue>
 binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_exception::insertion_of_existent_key_attempt_exception(
         tkey const &key):
-        std::logic_error("Attempt to insert already existing key inside the tree.")
+        std::logic_error("Attempt to insert already existing key inside the tree")
 { }
 
 template<
@@ -2990,7 +2978,7 @@ template<
         typename tvalue>
 binary_search_tree<tkey, tvalue>::obtaining_of_nonexistent_key_attempt_exception::obtaining_of_nonexistent_key_attempt_exception(
         tkey const &key):
-        std::logic_error("Attempt to obtain a value by non-existing key from the tree.")
+        std::logic_error("Attempt to obtain a value by non-existing key from the tree")
 { }
 
 template<
@@ -3006,7 +2994,7 @@ template<
         typename tvalue>
 binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_exception::disposal_of_nonexistent_key_attempt_exception(
         tkey const &key):
-        std::logic_error("Attempt to dispose a value by non-existing key from the tree.")
+        std::logic_error("Attempt to dispose a value by non-existing key from the tree")
 { }
 
 template<
@@ -3040,8 +3028,8 @@ std::stack<typename binary_search_tree<tkey, tvalue>::node **> binary_search_tre
     std::stack<node **> result_path;
 
     node **path_finder = reinterpret_cast<node**>(&(_tree->_root));
-    auto const &comparer = _tree->_keys_comparer;
 
+    auto const &comparer = _tree->_keys_comparer;
     int comparison_result;
 
     while (true)
@@ -3163,15 +3151,6 @@ allocator *binary_search_tree<tkey, tvalue>::insertion_template_method::get_allo
     return this->_tree->get_allocator();
 }
 
-//template<
-//        typename tkey,
-//        typename tvalue>
-//void binary_search_tree<tkey, tvalue>::insertion_template_method::set_insertion_strategy(
-//        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept
-//{
-//    _insertion_strategy = insertion_strategy;
-//}
-
 #pragma endregion search_tree<tkey, tvalue>::insertion_template_method implementation
 
 #pragma region search_tree<tkey, tvalue>::obtaining_template_method implementation
@@ -3229,7 +3208,7 @@ std::vector<typename associative_container<tkey, tvalue>::key_value_pair>
         {
             path.pop();
 
-            path_finder = path.top(); // TODO may be wrong
+            path_finder = path.top();
 
             while (!path.empty() && path_finder == path.top()->right_subtree)
             {
@@ -3307,7 +3286,7 @@ tvalue binary_search_tree<tkey, tvalue>::disposal_template_method::dispose(
         }
     }
 
-    if ((*(path.top()))->left_subtree != nullptr && (*(path.top()))->right_subtree != nullptr)
+    if ((*path.top())->left_subtree != nullptr && (*path.top())->right_subtree != nullptr)
     {
         auto *target_to_swap = *(path.top());
         auto **current = &((*(path.top()))->left_subtree);
@@ -3337,14 +3316,14 @@ tvalue binary_search_tree<tkey, tvalue>::disposal_template_method::dispose(
     return value;
 }
 
-template<
-        typename tkey,
-        typename tvalue>
-void binary_search_tree<tkey, tvalue>::disposal_template_method::set_disposal_strategy(
-        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept
-{
-    _disposal_strategy = disposal_strategy;
-}
+//template<
+//        typename tkey,
+//        typename tvalue>
+//void binary_search_tree<tkey, tvalue>::disposal_template_method::set_disposal_strategy(
+//        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept
+//{
+//    _disposal_strategy = disposal_strategy;
+//}
 
 template<
         typename tkey,
@@ -3370,7 +3349,7 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
         std::function<int(tkey const &, tkey const &)> comparer,
         allocator *allocator,
         logger *logger):
-        search_tree<tkey, tvalue>(comparer, logger, allocator),
+        search_tree<tkey, tvalue>(comparer, allocator, logger),
         _insertion_template(insertion_template),
         _obtaining_template(obtaining_template),
         _disposal_template(disposal_template)
@@ -3385,11 +3364,10 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
         logger *logger,
         typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
         typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
-        search_tree<tkey, tvalue>(comparer, allocator, logger)
+            search_tree<tkey, tvalue>(comparer, allocator, logger)
 {
     try
     {
-//        _root = nullptr;
         _insertion_template = new binary_search_tree<tkey, tvalue>::insertion_template_method(this, insertion_strategy);
         _obtaining_template = new binary_search_tree<tkey, tvalue>::obtaining_template_method(this);
         _disposal_template = new binary_search_tree<tkey, tvalue>::disposal_template_method(this, disposal_strategy);
@@ -3413,7 +3391,7 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
 {
     try
     {
-        reinterpret_cast<node*&>(this->_root) = copy(other._root);
+        this->_root = copy(reinterpret_cast<node*>(other._root));
 
         _insertion_template = new binary_search_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy);
         _obtaining_template = new binary_search_tree<tkey, tvalue>::obtaining_template_method(this);
@@ -3468,7 +3446,7 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
         *_obtaining_template = *(other._obtaining_template);
         *_disposal_template = *(other._disposal_template);
 
-        reinterpret_cast<node*&>(this->_root) = copy(other._root);
+        this->_root = copy(reinterpret_cast<node*>(other._root));
     }
 
     return *this;
@@ -3482,7 +3460,8 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
 {
     if (this != &other)
     {
-        clear(reinterpret_cast<node**>(&this->_root));
+        this->~binary_search_tree();
+
         this->_keys_comparer = std::move(other._keys_comparer);
 
         this->_logger = std::move(other._logger);
@@ -3500,7 +3479,7 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
         _disposal_template = std::move(other._disposal_template);
         other._disposal_template = nullptr;
 
-        reinterpret_cast<node*&>(this->_root) = std::move(other._root);
+        this->_root = std::move(other._root);
         other._root = nullptr;
     }
 
@@ -3515,7 +3494,7 @@ binary_search_tree<tkey, tvalue>::~binary_search_tree()
     delete _insertion_template;
     delete _obtaining_template;
     delete _disposal_template;
-    clear(reinterpret_cast<node*&>(this->_root));
+    clear(reinterpret_cast<node**>(&this->_root));
 }
 
 #pragma endregion construction, assignment, destruction implementation
@@ -3526,19 +3505,19 @@ template<
         typename tkey,
         typename tvalue>
 void binary_search_tree<tkey, tvalue>::clear(
-        node *&subtree_root)
+        node **subtree_root)
 {
-    if (subtree_root == nullptr)
+    if (*subtree_root == nullptr)
     {
         return;
     }
 
-    clear(subtree_root->left_subtree);
-    clear(subtree_root->right_subtree);
-    subtree_root->~node();
-    this->deallocate_with_guard(subtree_root);
+    clear(&(*subtree_root)->left_subtree);
+    clear(&(*subtree_root)->right_subtree);
+    (*subtree_root)->~node();
+    this->deallocate_with_guard(*subtree_root);
 
-    subtree_root = nullptr;
+    *subtree_root = nullptr;
 }
 
 template<
@@ -3564,6 +3543,7 @@ typename binary_search_tree<tkey, tvalue>::node *binary_search_tree<tkey, tvalue
     catch (const std::bad_alloc &)
     {
         clear(&subtree_root_copied);
+        this->error_with_guard(get_typename() + "::copy(node const *): bad alloc occurred while copying node");
 
         throw;
     }
@@ -4052,7 +4032,7 @@ void binary_search_tree<tkey, tvalue>::big_right_rotation(
     this->trace_with_guard(get_typename() + "::big_right_rotation(): called")
             ->debug_with_guard(get_typename() + "::big_right_rotation(): called");
 
-    if (validate && (subtree_root == nullptr || subtree_root->left_subtreel == nullptr ||
+    if (validate && (subtree_root == nullptr || subtree_root->left_subtree == nullptr ||
                      subtree_root->left_subtree->right_subtree == nullptr))
     {
         throw std::logic_error("It is impossible to make a big right rotation");
