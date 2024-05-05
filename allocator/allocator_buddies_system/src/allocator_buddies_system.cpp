@@ -497,7 +497,7 @@ inline unsigned char &allocator_buddies_system::get_block_status_and_degree(
 inline bool allocator_buddies_system::get_block_status(
         block_pointer_t block) const
 {
-    unsigned char mask = 0b10000000;
+    constexpr unsigned char mask = 0b10000000;
 
     return *reinterpret_cast<unsigned char *>(block) & mask;
 }
@@ -505,7 +505,7 @@ inline bool allocator_buddies_system::get_block_status(
 inline unsigned char allocator_buddies_system::get_block_degree(
         block_pointer_t block) const
 {
-    unsigned char mask = 0b01111111;
+    constexpr unsigned char mask = 0b01111111;
 
     return *reinterpret_cast<unsigned char *>(block) & mask;
 }

@@ -58,7 +58,7 @@ public:
 
         explicit iterator_data(
                 unsigned int depth,
-                node **src_node);
+                node *src_node);
 
         iterator_data(
                 iterator_data const &other);
@@ -176,17 +176,17 @@ private:
 
     void inject_additional_data(
             typename binary_search_tree<tkey,tvalue>::node *destination,
-            typename binary_search_tree<tkey,tvalue>::node const *source) const;
+            typename binary_search_tree<tkey,tvalue>::node const *source) const override;
 
     void inject_additional_data(
             typename binary_search_tree<tkey,tvalue>::iterator_data *destination,
-            typename binary_search_tree<tkey,tvalue>::node const *source) const;
+            typename binary_search_tree<tkey,tvalue>::node const *source) const override;
 
     typename binary_search_tree<tkey,tvalue>::iterator_data *create_iterator_data() const override;
 
     typename binary_search_tree<tkey,tvalue>::iterator_data *create_iterator_data(
             unsigned int depth,
-            typename binary_search_tree<tkey,tvalue>::node *&src_node) const override;
+            typename binary_search_tree<tkey,tvalue>::node *src_node) const override;
 
     static inline unsigned int get_subtree_height(
             typename binary_search_tree<tkey,tvalue>::node* node) noexcept;
@@ -248,14 +248,14 @@ template<
         typename tvalue>
 AVL_tree<tkey, tvalue>::iterator_data::iterator_data(
         unsigned int depth,
-        node **src_node):
+        node *src_node):
         binary_search_tree<tkey, tvalue>::iterator_data(
                 depth,
-                reinterpret_cast<typename binary_search_tree<tkey, tvalue>::node**>(src_node))
+                reinterpret_cast<typename binary_search_tree<tkey, tvalue>::node*>(src_node))
 {
-    if(*src_node != nullptr)
+    if(src_node != nullptr)
     {
-        _subtree_height = (*src_node)->_subtree_height;
+        _subtree_height = src_node->_subtree_height;
     }
 }
 
@@ -333,9 +333,9 @@ void AVL_tree<tkey, tvalue>::balance(
     this->trace_with_guard(get_typename() + "::balance(std::stack<node**>): called")
             ->debug_with_guard(get_typename() + "::balance(std::stack<node**>): called");
 
-    typename binary_search_tree<tkey, tvalue>::node *cur = *path.top();
+    typename binary_search_tree<tkey, tvalue>::node **cur = path.top();
 
-    if (cur == nullptr)
+    if (*cur == nullptr)
     {
         path.pop();
     }
@@ -344,45 +344,45 @@ void AVL_tree<tkey, tvalue>::balance(
 
     while (!path.empty())
     {
-        cur = *path.top();
+        cur = path.top();
         path.pop();
 
-        update_node_data(cur);
+        update_node_data(*cur);
 
-        height_difference = get_subtree_height(cur->right_subtree) - get_subtree_height(cur->left_subtree);
+        height_difference = get_subtree_height((*cur)->right_subtree) - get_subtree_height((*cur)->left_subtree);
 
         this->debug_with_guard(get_typename() + "::balance(std::stack<node**>): checking node with key: " +
-                               extra_utility::make_string(cur->key) +
+                               extra_utility::make_string((*cur)->key) +
                                ". Height difference (right - left) is " + std::to_string(height_difference));
 
         if (height_difference == 2)
         {
             height_difference =
-                    get_subtree_height(cur->right_subtree->right_subtree) -
-                    get_subtree_height(cur->right_subtree->left_subtree);
+                    get_subtree_height((*cur)->right_subtree->right_subtree) -
+                    get_subtree_height((*cur)->right_subtree->left_subtree);
 
             if (height_difference >= 0)
             {
-                this->small_left_rotation(cur);
+                this->small_left_rotation(*cur);
             }
             else
             {
-                this->big_left_rotation(cur);
+                this->big_left_rotation(*cur);
             }
         }
         else if (height_difference == -2)
         {
             height_difference =
-                    get_subtree_height(cur->left_subtree->right_subtree) -
-                    get_subtree_height(cur->left_subtree->left_subtree);
+                    get_subtree_height((*cur)->left_subtree->right_subtree) -
+                    get_subtree_height((*cur)->left_subtree->left_subtree);
 
             if (height_difference <= 0)
             {
-                this->small_right_rotation(cur);
+                this->small_right_rotation(*cur);
             }
             else
             {
-                this->big_right_rotation(cur);
+                this->big_right_rotation(*cur);
             }
         }
     }
@@ -595,10 +595,19 @@ inline void AVL_tree<tkey, tvalue>::update_node_data(
 {
     auto *avl_node = dynamic_cast<AVL_tree<tkey, tvalue>::node*>(node);
 
-    size_t left_height = get_subtree_height(avl_node->left_subtree);
-    size_t right_height = get_subtree_height(avl_node->right_subtree);
+    size_t left_height = get_subtree_height(node->left_subtree);
+    size_t right_height = get_subtree_height(node->right_subtree);
+
+    // std::cout << "---" << std::max(left_height, right_height) + 1 << std::endl;
 
     avl_node->_subtree_height = std::max(left_height, right_height) + 1;
+
+//    auto *avl_node = dynamic_cast<AVL_tree<tkey, tvalue>::node*>(node);
+//
+//    size_t left_height = get_subtree_height(avl_node->left_subtree);
+//    size_t right_height = get_subtree_height(avl_node->right_subtree);
+//
+//    avl_node->_subtree_height = std::max(left_height, right_height) + 1;
 }
 
 template<
@@ -641,7 +650,7 @@ void AVL_tree<tkey, tvalue>::inject_additional_data(
     auto *avl_destination = dynamic_cast<AVL_tree<tkey, tvalue>::node*>(destination);
     auto *avl_source = dynamic_cast<AVL_tree<tkey, tvalue>::node const*>(source);
 
-    avl_destination->subtree_height = avl_source->subtree_height;
+    avl_destination->_subtree_height = avl_source->_subtree_height;
 }
 
 template<
@@ -654,7 +663,7 @@ void AVL_tree<tkey, tvalue>::inject_additional_data(
     auto *avl_destination = dynamic_cast<AVL_tree<tkey, tvalue>::iterator_data*>(destination);
     auto *avl_source = dynamic_cast<AVL_tree<tkey, tvalue>::node const*>(source);
 
-    avl_destination->_subtree_height = avl_source->subtree_height;
+    avl_destination->_subtree_height = avl_source->_subtree_height;
 }
 
 template<
@@ -670,9 +679,9 @@ template<
         typename tvalue>
 typename binary_search_tree<tkey, tvalue>::iterator_data *AVL_tree<tkey, tvalue>::create_iterator_data(
         unsigned int depth,
-        typename binary_search_tree<tkey,tvalue>::node *&src_node) const
+        typename binary_search_tree<tkey,tvalue>::node *src_node) const
 {
-    return new iterator_data(depth, reinterpret_cast<AVL_tree<tkey, tvalue>::node**>(&src_node));
+    return new iterator_data(depth, reinterpret_cast<AVL_tree<tkey, tvalue>::node*>(src_node));
 }
 
 template<
@@ -683,7 +692,12 @@ inline unsigned int AVL_tree<tkey, tvalue>::get_subtree_height(
 {
     auto *avl_node = dynamic_cast<AVL_tree<tkey,tvalue>::node*>(node);
 
-    return avl_node ? avl_node->_subtree_height : 0;
+    if (avl_node == nullptr)
+    {
+        return 0;
+    }
+
+    return avl_node->_subtree_height;
 }
 
 #pragma endregion avl extra functions implementation
