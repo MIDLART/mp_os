@@ -100,7 +100,8 @@ private:
     private:
 
         void balance(
-                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
+                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+                typename binary_search_tree<tkey, tvalue>::node* node_to_dispose = nullptr) override;
 
     };
 
@@ -128,7 +129,8 @@ private:
     private:
 
         void balance(
-                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
+                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+                typename binary_search_tree<tkey, tvalue>::node* node_to_dispose = nullptr) override;
 
     };
 
@@ -408,7 +410,8 @@ template<
         typename tkey,
         typename tvalue>
 void AVL_tree<tkey, tvalue>::insertion_template_method::balance(
-        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
+        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+        typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
 {
     dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
 }
@@ -434,7 +437,8 @@ template<
         typename tkey,
         typename tvalue>
 void AVL_tree<tkey, tvalue>::disposal_template_method::balance(
-        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
+        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+        typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
 {
     dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
 }
@@ -481,7 +485,7 @@ AVL_tree<tkey, tvalue>::AVL_tree(
         typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
         binary_search_tree<tkey, tvalue>(
                 new(std::nothrow) AVL_tree<tkey, tvalue>::insertion_template_method(this, insertion_strategy),
-                new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
+                new(std::nothrow) AVL_tree<tkey, tvalue>::obtaining_template_method(this),
                 new(std::nothrow) AVL_tree<tkey, tvalue>::disposal_template_method(this, disposal_strategy),
                 comparer, allocator, logger)
 {
@@ -523,7 +527,7 @@ AVL_tree<tkey, tvalue>::AVL_tree(
         AVL_tree<tkey, tvalue> const &other):
         binary_search_tree<tkey, tvalue>(
                 new(std::nothrow) AVL_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy),
-                new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
+                new(std::nothrow) AVL_tree<tkey, tvalue>::obtaining_template_method(this),
                 new(std::nothrow) AVL_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy),
                 other._keys_comparer, other.get_allocator(), other.get_logger())
 {
@@ -537,7 +541,7 @@ AVL_tree<tkey, tvalue>::AVL_tree(
 
         this->_root = this->copy(reinterpret_cast<node*>(other._root));
     }
-    catch (const std::bad_alloc& ex)
+    catch (const std::bad_alloc &)
     {
         this->clear(reinterpret_cast<typename binary_search_tree<tkey, tvalue>::node**>(&this->_root));
         delete this->_insertion_template;

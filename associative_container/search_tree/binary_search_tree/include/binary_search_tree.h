@@ -755,7 +755,8 @@ protected:
                 tkey const &key) const;
 
         virtual void balance(
-                std::stack<node **> &path);
+                std::stack<node **> &path,
+                node* node_to_dispose = nullptr);
 
     protected:
 
@@ -3091,7 +3092,8 @@ template<
         typename tkey,
         typename tvalue>
 void binary_search_tree<tkey, tvalue>::template_method_basics::balance(
-        std::stack<node**> &path)
+        std::stack<node**> &path,
+        node* node_to_dispose)
 { }
 
 template<
@@ -3339,11 +3341,13 @@ tvalue binary_search_tree<tkey, tvalue>::disposal_template_method::dispose(
                              ? (*(path.top()))->right_subtree
                              : (*(path.top()))->left_subtree;
 
-    allocator::destruct(*(path.top()));
-    deallocate_with_guard(*(path.top()));
+    node *node_to_dispose = *(path.top());
 
     *(path.top()) = subtree;
-    this->balance(path);
+    this->balance(path, node_to_dispose);
+
+    allocator::destruct(node_to_dispose);
+    deallocate_with_guard(node_to_dispose);
 
     return value;
 }
