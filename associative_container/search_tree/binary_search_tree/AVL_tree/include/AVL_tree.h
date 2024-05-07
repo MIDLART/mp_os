@@ -100,8 +100,7 @@ private:
     private:
 
         void balance(
-                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-                typename binary_search_tree<tkey, tvalue>::node* node_to_dispose = nullptr) override;
+                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
 
     };
 
@@ -129,8 +128,7 @@ private:
     private:
 
         void balance(
-                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-                typename binary_search_tree<tkey, tvalue>::node* node_to_dispose = nullptr) override;
+                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
 
     };
 
@@ -192,8 +190,6 @@ private:
 
     static inline unsigned int get_subtree_height(
             typename binary_search_tree<tkey,tvalue>::node* node) noexcept;
-
-private:
 
     inline std::string get_typename() const noexcept;
 
@@ -410,8 +406,7 @@ template<
         typename tkey,
         typename tvalue>
 void AVL_tree<tkey, tvalue>::insertion_template_method::balance(
-        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-        typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
+        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
     dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
 }
@@ -437,8 +432,7 @@ template<
         typename tkey,
         typename tvalue>
 void AVL_tree<tkey, tvalue>::disposal_template_method::balance(
-        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-        typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
+        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
     dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
 }
@@ -704,8 +698,6 @@ inline unsigned int AVL_tree<tkey, tvalue>::get_subtree_height(
     return avl_node->_subtree_height;
 }
 
-#pragma endregion avl extra functions implementation
-
 template<
         typename tkey,
         typename tvalue>
@@ -713,5 +705,7 @@ inline std::string AVL_tree<tkey, tvalue>::get_typename() const noexcept
 {
     return "AVL_tree<tkey, tvalue>";
 }
+
+#pragma endregion avl extra functions implementation
 
 #endif //MATH_PRACTICE_AND_OPERATING_SYSTEMS_AVL_TREE_H

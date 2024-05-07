@@ -105,8 +105,7 @@ private:
     private:
 
         void balance(
-                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-                typename binary_search_tree<tkey, tvalue>::node* node_to_dispose = nullptr) override;
+                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
         
     };
     
@@ -124,6 +123,11 @@ private:
     class disposal_template_method final:
         public binary_search_tree<tkey, tvalue>::disposal_template_method
     {
+
+    private:
+
+        node_color _deleted_color;
+        bool _deleted_has_children;
     
     public:
         
@@ -134,18 +138,10 @@ private:
     private:
 
         void balance(
-                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-                typename binary_search_tree<tkey, tvalue>::node* node_to_dispose) override;
+                std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
 
-        void call_small_rotation(
-                typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
-                void *root,
-                bool is_right) const;
-
-        void call_big_rotation(
-                typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
-                void *root,
-                bool is_right) const;
+        virtual void identify_deleted_node(
+                node* node_to_dispose);
         
     };
 
@@ -209,8 +205,6 @@ private:
             typename binary_search_tree<tkey,tvalue>::node* node,
             node_color color) noexcept;
 
-private:
-
     inline std::string get_typename() const noexcept;
     
 };
@@ -224,7 +218,7 @@ red_black_tree<tkey, tvalue>::node::node(
         const tkey &key,
         const tvalue &value):
         binary_search_tree<tkey, tvalue>::node(key, value),
-        _color(node_color::Red)
+        _color(node_color::RED)
 { }
 
 template<
@@ -234,7 +228,7 @@ red_black_tree<tkey, tvalue>::node::node(
         const tkey &key,
         tvalue &&value):
         binary_search_tree<tkey, tvalue>::node(key, std::move(value)),
-        _color(node_color::Red)
+        _color(node_color::RED)
 { }
 
 #pragma endregion node implementation
@@ -246,7 +240,7 @@ template<
         typename tvalue>
 red_black_tree<tkey, tvalue>::iterator_data::iterator_data():
         binary_search_tree<tkey, tvalue>::iterator_data(),
-        _color(node_color::Red)
+        _color(node_color::RED)
 { }
 
 template<
@@ -355,11 +349,96 @@ template<
         typename tkey,
         typename tvalue>
 void red_black_tree<tkey, tvalue>::insertion_template_method::balance(
-        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-        typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
+        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
+    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called")
+            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called");
 
+    typename binary_search_tree<tkey, tvalue>::node **cur;
+    typename binary_search_tree<tkey, tvalue>::node **parent;
+    typename binary_search_tree<tkey, tvalue>::node **grandparent;
+    typename binary_search_tree<tkey, tvalue>::node **uncle;
 
+    // TODO dynamic_cast ?
+
+    while (path.size() >= 3)
+    {
+        cur = path.top();
+        path.pop();
+        parent = path.top();
+        path.pop();
+
+        // trivial
+        if (get_color(*cur) == node_color::BLACK || get_color(*parent) == node_color::BLACK)
+        {
+            break;
+        }
+
+        grandparent = path.top();
+        if ((*grandparent)->right_subtree == *parent)
+        {
+            uncle = &((*grandparent)->left_subtree);
+        }
+        else
+        {
+            uncle = &((*grandparent)->right_subtree);
+        }
+
+        // parent is red
+
+        // uncle is red
+        if (get_color(*uncle) == node_color::RED)
+        {
+            set_color(*parent, node_color::BLACK);
+            set_color(*uncle, node_color::BLACK);
+            set_color(*grandparent, node_color::RED);
+        }
+        else
+        {
+            // uncle is black
+            set_color(*grandparent, node_color::RED);
+
+            if ((*grandparent)->left_subtree == *parent)
+            {
+                // ll
+                if ((*parent)->left_subtree == cur)
+                {
+                    this->small_right_rotation(*grandparent);
+                    set_color(*parent, node_color::BLACK);
+                }
+                // lr
+                else
+                {
+                    this->big_right_rotation(*grandparent);
+                    set_color(*cur, node_color::BLACK);
+                }
+            }
+            else
+            {
+                // rr
+                if ((*parent)->right_subtree == cur)
+                {
+                    this->small_left_rotation(*grandparent);
+                    set_color(*parent, node_color::BLACK);
+                }
+                // rl
+                else
+                {
+                    this->big_left_rotation(*grandparent);
+                    set_color(*cur, node_color::BLACK);
+                }
+            }
+        }
+    }
+
+    // root
+    if (path.size() == 1)
+    {
+        reinterpret_cast<red_black_tree<tkey, tvalue>::node*>(*(path.top()))->color = node_color::BLACK;
+    }
+
+    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended")
+            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended");
 }
 
 template<
@@ -383,45 +462,54 @@ template<
         typename tkey,
         typename tvalue>
 void red_black_tree<tkey, tvalue>::disposal_template_method::balance(
-        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
-        typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
+        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
+    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called")
+            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called");
 
+    if (_deleted_color == node_color::RED)
+    {
+        // TODO automatic log call
+        this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
+                ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
+
+        return;
+    }
+
+    typename binary_search_tree<tkey, tvalue>::node **cur;
+    typename binary_search_tree<tkey, tvalue>::node **parent;
+    typename binary_search_tree<tkey, tvalue>::node **grandparent;
+    typename binary_search_tree<tkey, tvalue>::node **uncle;
+
+    while (path.size() >= 3)
+    {
+        cur = path.top();
+        path.pop();
+        parent = path.top();
+        path.pop();
+
+    }
+
+    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
+            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
 }
 
 template<
         typename tkey,
         typename tvalue>
-void red_black_tree<tkey, tvalue>::disposal_template_method::call_small_rotation(
-        typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
-        void *root,
-        bool is_right) const
+void red_black_tree<tkey, tvalue>::disposal_template_method::identify_deleted_node(
+        red_black_tree::node *node_to_dispose)
 {
-    if (is_right)
-    {
-        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->small_right_rotation(*node_to_rotate);
-    }
-    else
-    {
-        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->small_left_rotation(*node_to_rotate);
-    }
-}
+    _deleted_color = get_color(node_to_dispose);
 
-template<
-        typename tkey,
-        typename tvalue>
-void red_black_tree<tkey, tvalue>::disposal_template_method::call_big_rotation(
-        typename binary_search_tree<tkey, tvalue>::node **node_to_rotate,
-        void *root,
-        bool is_right) const
-{
-    if (is_right)
+    if (node_to_dispose->left_subtree != nullptr ||
+        node_to_dispose->right_subtree != nullptr)
     {
-        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->big_right_rotation(*node_to_rotate);
+        _deleted_has_children = true;
     }
     else
     {
-        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->big_right_rotation(*node_to_rotate);
+        _deleted_has_children = false;
     }
 }
 

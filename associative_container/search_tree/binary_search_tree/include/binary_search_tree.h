@@ -755,8 +755,7 @@ protected:
                 tkey const &key) const;
 
         virtual void balance(
-                std::stack<node **> &path,
-                node* node_to_dispose = nullptr);
+                std::stack<node **> &path);
 
     protected:
 
@@ -839,6 +838,11 @@ protected:
 
 //        void set_disposal_strategy(
 //                typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept;
+
+    protected:
+
+        virtual void identify_deleted_node(
+                node* node_to_dispose);
 
     private:
 
@@ -3092,8 +3096,7 @@ template<
         typename tkey,
         typename tvalue>
 void binary_search_tree<tkey, tvalue>::template_method_basics::balance(
-        std::stack<node**> &path,
-        node* node_to_dispose)
+        std::stack<node**> &path)
 { }
 
 template<
@@ -3342,15 +3345,23 @@ tvalue binary_search_tree<tkey, tvalue>::disposal_template_method::dispose(
                              : (*(path.top()))->left_subtree;
 
     node *node_to_dispose = *(path.top());
-
     *(path.top()) = subtree;
-    this->balance(path, node_to_dispose);
+
+    this->identify_deleted_node(node_to_dispose);
+    this->balance(path);
 
     allocator::destruct(node_to_dispose);
     deallocate_with_guard(node_to_dispose);
 
     return value;
 }
+
+template<
+        typename tkey,
+        typename tvalue>
+void binary_search_tree<tkey, tvalue>::disposal_template_method::identify_deleted_node(
+        node *node_to_dispose)
+{ }
 
 //template<
 //        typename tkey,
