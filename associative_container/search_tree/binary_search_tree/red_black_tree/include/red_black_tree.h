@@ -142,6 +142,14 @@ private:
 
         virtual void identify_deleted_node(
                 node* node_to_dispose);
+
+        void call_small_rotation(
+                typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
+                bool left) const;
+
+        void call_big_rotation(
+                typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
+                bool left) const;
         
     };
 
@@ -201,7 +209,7 @@ private:
     static inline node_color get_color(
             typename binary_search_tree<tkey,tvalue>::node* node) noexcept;
 
-    void set_color(
+    static inline void set_color(
             typename binary_search_tree<tkey,tvalue>::node* node,
             node_color color) noexcept;
 
@@ -351,15 +359,13 @@ template<
 void red_black_tree<tkey, tvalue>::insertion_template_method::balance(
         std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
-    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called")
-            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called");
+//    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called")
+//            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called");
 
     typename binary_search_tree<tkey, tvalue>::node **cur;
     typename binary_search_tree<tkey, tvalue>::node **parent;
     typename binary_search_tree<tkey, tvalue>::node **grandparent;
     typename binary_search_tree<tkey, tvalue>::node **uncle;
-
-    // TODO dynamic_cast ?
 
     while (path.size() >= 3)
     {
@@ -401,31 +407,31 @@ void red_black_tree<tkey, tvalue>::insertion_template_method::balance(
             if ((*grandparent)->left_subtree == *parent)
             {
                 // ll
-                if ((*parent)->left_subtree == cur)
+                if ((*parent)->left_subtree == *cur)
                 {
-                    this->small_right_rotation(*grandparent);
                     set_color(*parent, node_color::BLACK);
+                    dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->small_right_rotation(*grandparent);
                 }
                 // lr
                 else
                 {
-                    this->big_right_rotation(*grandparent);
                     set_color(*cur, node_color::BLACK);
+                    dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->big_right_rotation(*grandparent);
                 }
             }
             else
             {
                 // rr
-                if ((*parent)->right_subtree == cur)
+                if ((*parent)->right_subtree == *cur)
                 {
-                    this->small_left_rotation(*grandparent);
                     set_color(*parent, node_color::BLACK);
+                    dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->small_left_rotation(*grandparent);
                 }
                 // rl
                 else
                 {
-                    this->big_left_rotation(*grandparent);
                     set_color(*cur, node_color::BLACK);
+                    dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->big_left_rotation(*grandparent);
                 }
             }
         }
@@ -434,11 +440,11 @@ void red_black_tree<tkey, tvalue>::insertion_template_method::balance(
     // root
     if (path.size() == 1)
     {
-        reinterpret_cast<red_black_tree<tkey, tvalue>::node*>(*(path.top()))->color = node_color::BLACK;
+        reinterpret_cast<red_black_tree<tkey, tvalue>::node*>(*(path.top()))->_color = node_color::BLACK;
     }
 
-    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended")
-            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended");
+//    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended")
+//            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended");
 }
 
 template<
@@ -464,34 +470,118 @@ template<
 void red_black_tree<tkey, tvalue>::disposal_template_method::balance(
         std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
-    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called")
-            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called");
+//    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called")
+//            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called");
 
+    // Red
     if (_deleted_color == node_color::RED)
     {
         // TODO automatic log call
-        this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
-                ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
+//        this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
+//                ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
 
         return;
     }
 
-    typename binary_search_tree<tkey, tvalue>::node **cur;
-    typename binary_search_tree<tkey, tvalue>::node **parent;
-    typename binary_search_tree<tkey, tvalue>::node **grandparent;
-    typename binary_search_tree<tkey, tvalue>::node **uncle;
+    // Black
 
-    while (path.size() >= 3)
+    // not a leaf
+    if (_deleted_has_children)
     {
-        cur = path.top();
-        path.pop();
-        parent = path.top();
-        path.pop();
+        set_color(*path.top(), node_color::BLACK);
+    }
+    // leaf
+    else
+    {
+        bool unbalanced = true;
 
+        typename binary_search_tree<tkey, tvalue>::node **cur;
+        typename binary_search_tree<tkey, tvalue>::node **parent;
+        typename binary_search_tree<tkey, tvalue>::node **brother;
+        typename binary_search_tree<tkey, tvalue>::node **nephew;
+        typename binary_search_tree<tkey, tvalue>::node **opposite_nephew;
+
+        bool left;
+
+        while (path.size() >= 2 && unbalanced)
+        {
+            cur = path.top();
+            path.pop();
+            parent = path.top();
+
+            if ((*parent)->left_subtree == *cur)
+            {
+                left = true;
+
+                brother = &((*parent)->right_subtree);
+                nephew = &((*parent)->left_subtree);
+                opposite_nephew = &((*parent)->right_subtree);
+            }
+            else
+            {
+                left = false;
+
+                brother = &((*parent)->left_subtree);
+                nephew = &((*parent)->right_subtree);
+                opposite_nephew = &((*parent)->left_subtree);
+            }
+
+            // brother is black
+            if (get_color(*brother) == node_color::BLACK)
+            {
+                // opposite_nephew is red
+                if (get_color(*opposite_nephew) == node_color::RED)
+                {
+                    set_color(*brother, get_color(*parent));
+                    set_color(*opposite_nephew, node_color::BLACK);
+                    set_color(*parent, node_color::BLACK);
+
+                    this->call_small_rotation(parent, left);
+
+                    unbalanced = false;
+                }
+                // nephew is red
+                else if (get_color(*nephew) == node_color::RED)
+                {
+                    set_color(*brother, node_color::BLACK);
+                    set_color(*nephew, get_color(*parent));
+                    set_color(*parent, node_color::BLACK);
+
+                    this->call_big_rotation(parent, left);
+
+                    unbalanced = false;
+                }
+                // both are black
+                else
+                {
+                    set_color(*brother, node_color::RED);
+
+                    if (get_color(*parent) == node_color::RED)
+                    {
+                        unbalanced = false;
+                    }
+
+                    set_color(*parent, node_color::BLACK);
+                }
+            }
+            // brother is red
+            else
+            {
+                set_color(*parent, node_color::RED);
+                set_color(*brother, node_color::BLACK);
+
+                this->call_small_rotation(parent, left);
+
+                path.pop();
+                path.push(brother);
+                path.push(parent);
+                path.push(cur);
+            }
+        }
     }
 
-    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
-            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
+//    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
+//            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
 }
 
 template<
@@ -510,6 +600,40 @@ void red_black_tree<tkey, tvalue>::disposal_template_method::identify_deleted_no
     else
     {
         _deleted_has_children = false;
+    }
+}
+
+template<
+        typename tkey,
+        typename tvalue>
+void red_black_tree<tkey, tvalue>::disposal_template_method::call_small_rotation(
+        typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
+        bool left) const
+{
+    if (left)
+    {
+        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->small_left_rotation(*node_to_rotate);
+    }
+    else
+    {
+        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->small_right_rotation(*node_to_rotate);
+    }
+}
+
+template<
+        typename tkey,
+        typename tvalue>
+void red_black_tree<tkey, tvalue>::disposal_template_method::call_big_rotation(
+        typename binary_search_tree<tkey, tvalue>::node **node_to_rotate,
+        bool left) const
+{
+    if (left)
+    {
+        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->big_left_rotation(*node_to_rotate);
+    }
+    else
+    {
+        dynamic_cast<red_black_tree<tkey, tvalue>*>(this->_tree)->big_right_rotation(*node_to_rotate);
     }
 }
 
@@ -711,15 +835,8 @@ void red_black_tree<tkey, tvalue>::set_color(
         typename binary_search_tree<tkey,tvalue>::node *node,
         red_black_tree::node_color color) noexcept
 {
-    auto *rbt_node = dynamic_cast<red_black_tree<tkey,tvalue>::node*>(node);
-
-    if (rbt_node != nullptr)
-    {
-        rbt_node->_color = color;
-    }
+    dynamic_cast<red_black_tree<tkey,tvalue>::node*>(node)->_color = color;
 }
-
-#pragma endregion red_black_tree extra functions implementation
 
 template<
         typename tkey,
@@ -728,5 +845,7 @@ inline std::string red_black_tree<tkey, tvalue>::get_typename() const noexcept
 {
     return "red_black_tree<tkey, tvalue>";
 }
+
+#pragma endregion red_black_tree extra functions implementation
 
 #endif //MATH_PRACTICE_AND_OPERATING_SYSTEMS_RED_BLACK_TREE_H

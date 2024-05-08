@@ -596,16 +596,7 @@ inline void AVL_tree<tkey, tvalue>::update_node_data(
     size_t left_height = get_subtree_height(node->left_subtree);
     size_t right_height = get_subtree_height(node->right_subtree);
 
-    // std::cout << "---" << std::max(left_height, right_height) + 1 << std::endl;
-
     avl_node->_subtree_height = std::max(left_height, right_height) + 1;
-
-//    auto *avl_node = dynamic_cast<AVL_tree<tkey, tvalue>::node*>(node);
-//
-//    size_t left_height = get_subtree_height(avl_node->left_subtree);
-//    size_t right_height = get_subtree_height(avl_node->right_subtree);
-//
-//    avl_node->_subtree_height = std::max(left_height, right_height) + 1;
 }
 
 template<
