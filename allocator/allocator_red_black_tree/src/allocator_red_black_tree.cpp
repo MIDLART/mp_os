@@ -4,31 +4,47 @@
 
 allocator_red_black_tree::~allocator_red_black_tree()
 {
-    throw not_implemented("allocator_red_black_tree::~allocator_red_black_tree()", "your code should be here...");
+    trace_with_guard(get_typename() + "::~allocator_buddies_system() called");
+
+    logger *logger = get_logger();
+    get_mutex().~mutex();
+
+    deallocate_with_guard(_trusted_memory);
+
+    if(logger)
+    {
+        logger->trace(get_typename() + "::~allocator_buddies_system() finished");
+    }
 }
 
 allocator_red_black_tree::allocator_red_black_tree(
-    allocator_red_black_tree const &other)
+    allocator_red_black_tree &&other) noexcept:
+        _trusted_memory(other._trusted_memory)
 {
-    throw not_implemented("allocator_red_black_tree::allocator_red_black_tree(allocator_red_black_tree const &)", "your code should be here...");
-}
+    trace_with_guard(get_typename() + "::allocator_allocator_buddies_system(allocator_boundary_tags &&) called");
 
-allocator_red_black_tree &allocator_red_black_tree::operator=(
-    allocator_red_black_tree const &other)
-{
-    throw not_implemented("allocator_red_black_tree &allocator_red_black_tree::operator=(allocator_red_black_tree const &)", "your code should be here...");
-}
+    other._trusted_memory = nullptr;
 
-allocator_red_black_tree::allocator_red_black_tree(
-    allocator_red_black_tree &&other) noexcept
-{
-    throw not_implemented("allocator_red_black_tree::allocator_red_black_tree(allocator_red_black_tree &&) noexcept", "your code should be here...");
+    trace_with_guard(get_typename() + "::allocator_allocator_buddies_system(allocator_boundary_tags &&) finished");
 }
 
 allocator_red_black_tree &allocator_red_black_tree::operator=(
     allocator_red_black_tree &&other) noexcept
 {
-    throw not_implemented("allocator_red_black_tree &allocator_red_black_tree::operator=(allocator_red_black_tree &&) noexcept", "your code should be here...");
+    trace_with_guard(get_typename() + "::allocator_allocator_buddies_system &operator=(allocator_boundary_tags &&) called");
+
+    if (this != &other)
+    {
+        get_mutex().~mutex();
+        deallocate_with_guard(_trusted_memory);
+
+        _trusted_memory = other._trusted_memory;
+        other._trusted_memory = nullptr;
+    }
+
+    trace_with_guard(get_typename() + "::allocator_allocator_buddies_system &operator=(allocator_boundary_tags &&) finished");
+
+    return *this;
 }
 
 allocator_red_black_tree::allocator_red_black_tree(
@@ -37,7 +53,14 @@ allocator_red_black_tree::allocator_red_black_tree(
     logger *logger,
     allocator_with_fit_mode::fit_mode allocate_fit_mode)
 {
-    throw not_implemented("allocator_red_black_tree::allocator_red_black_tree(size_t, allocator *, logger *, allocator_with_fit_mode::fit_mode)", "your code should be here...");
+    if (logger != nullptr)
+    {
+        logger->trace(get_typename() + "::allocator_allocator_buddies_system(size_t, allocator *, logger *, fit_mode) called");
+    }
+
+
+
+    trace_with_guard(get_typename() + "::allocator_allocator_buddies_system(size_t, allocator *, logger *, fit_mode) finished");
 }
 
 [[nodiscard]] void *allocator_red_black_tree::allocate(
@@ -56,7 +79,7 @@ void allocator_red_black_tree::deallocate(
 inline void allocator_red_black_tree::set_fit_mode(
     allocator_with_fit_mode::fit_mode mode)
 {
-    throw not_implemented("inline void allocator_red_black_tree::set_fit_mode(allocator_with_fit_mode::fit_mode)", "your code should be here...");
+    get_fit_mode() = mode;
 }
 
 inline allocator *allocator_red_black_tree::get_allocator() const
@@ -76,5 +99,5 @@ inline logger *allocator_red_black_tree::get_logger() const
 
 inline std::string allocator_red_black_tree::get_typename() const noexcept
 {
-    throw not_implemented("inline std::string allocator_red_black_tree::get_typename() const noexcept", "your code should be here...");
+    return "allocator_red_black_tree";
 }

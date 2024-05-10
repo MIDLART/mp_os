@@ -7,6 +7,8 @@
 #include <logger_guardant.h>
 #include <typename_holder.h>
 
+#include <mutex>
+
 class allocator_red_black_tree final:
     private allocator_guardant,
     public allocator_test_utils,
@@ -24,10 +26,10 @@ public:
     ~allocator_red_black_tree() override;
     
     allocator_red_black_tree(
-        allocator_red_black_tree const &other);
+        allocator_red_black_tree const &other) = delete;
     
     allocator_red_black_tree &operator=(
-        allocator_red_black_tree const &other);
+        allocator_red_black_tree const &other) = delete;
     
     allocator_red_black_tree(
         allocator_red_black_tree &&other) noexcept;
@@ -61,13 +63,47 @@ private:
     
     inline allocator *get_allocator() const override;
 
+    inline logger *get_logger() const override;
+
+    inline allocator_with_fit_mode::fit_mode &get_fit_mode() const;
+
+    inline std::mutex &get_mutex() const;
+
+    inline allocator::block_size_t get_allocator_size() const;
+
+    inline allocator::block_size_t &get_free_space() const;
+
+    inline allocator::block_pointer_t &get_head_block() const;
+
+private:
+
+    inline allocator::block_size_t get_meta_size() const;
+
+    inline allocator::block_size_t get_avail_block_meta_size() const;
+
+    inline allocator::block_size_t get_occup_block_meta_size() const;
+
+private:
+
+    inline allocator::block_pointer_t &get_next_block(
+            block_pointer_t block) const; // for available block
+
+    inline allocator::block_pointer_t &get_prev_block(
+            block_pointer_t block) const; // for available block
+
+    inline allocator::block_size_t &get_block_size(
+            block_pointer_t block) const;
+
+    inline allocator *&get_block_allocator(
+            block_pointer_t block) const; // for occupied block
+
 public:
     
     std::vector<allocator_test_utils::block_info> get_blocks_info() const noexcept override;
 
-private:
-    
-    inline logger *get_logger() const override;
+    std::vector<allocator_test_utils::block_info> create_blocks_info() const noexcept;
+
+    void debug_blocks_info(std::string call_function_name) const;
 
 private:
     
