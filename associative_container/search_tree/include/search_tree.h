@@ -325,7 +325,8 @@ void search_tree<tkey, tvalue>::merge_nodes(
     auto *left_subtree = parent->subtrees[left_subtree_index];
     auto *right_subtree = parent->subtrees[left_subtree_index + 1];
 
-    allocator::construct(left_subtree->keys_and_values + left_subtree->virtual_size++, std::move(parent->keys_and_values[left_subtree_index]));
+    allocator::construct(left_subtree->keys_and_values + left_subtree->virtual_size++,
+                         std::move(parent->keys_and_values[left_subtree_index]));
     for (size_t i = left_subtree_index; i < parent->virtual_size - 1; ++i)
     {
         search_tree<tkey, tvalue>::swap(std::move(parent->keys_and_values[i]), std::move(parent->keys_and_values[i + 1]));

@@ -11,7 +11,7 @@ class red_black_tree final:
 {
 
 public:
-    
+
     enum class node_color
     {
         RED,
@@ -19,7 +19,7 @@ public:
     };
 
 private:
-    
+
     struct node final:
         binary_search_tree<tkey, tvalue>::node
     {
@@ -37,11 +37,11 @@ private:
         explicit node(
                 tkey const &key,
                 tvalue &&value);
-        
+
     };
 
 public:
-    
+
     struct iterator_data final:
         public binary_search_tree<tkey, tvalue>::iterator_data
     {
@@ -49,15 +49,15 @@ public:
         friend void red_black_tree<tkey, tvalue>::inject_additional_data(
                 typename binary_search_tree<tkey, tvalue>::iterator_data *,
                 typename binary_search_tree<tkey, tvalue>::node const *) const;
-    
+
     public:
-        
+
         node_color _color;
-    
+
     public:
 
         iterator_data();
-        
+
         explicit iterator_data(
             unsigned int depth,
             tkey const &key,
@@ -87,17 +87,17 @@ public:
     public:
 
         node_color get_color() const;
-        
+
     };
 
 private:
-    
+
     class insertion_template_method final:
         public binary_search_tree<tkey, tvalue>::insertion_template_method
     {
-    
+
     public:
-        
+
         explicit insertion_template_method(
             red_black_tree<tkey, tvalue> *tree,
             typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy);
@@ -106,20 +106,20 @@ private:
 
         void balance(
                 std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
-        
+
     };
-    
+
     class obtaining_template_method final:
         public binary_search_tree<tkey, tvalue>::obtaining_template_method
     {
-    
+
     public:
-        
+
         explicit obtaining_template_method(
             red_black_tree<tkey, tvalue> *tree);
-        
+
     };
-    
+
     class disposal_template_method final:
         public binary_search_tree<tkey, tvalue>::disposal_template_method
     {
@@ -128,9 +128,9 @@ private:
 
         node_color _deleted_color;
         bool _deleted_has_children;
-    
+
     public:
-        
+
         explicit disposal_template_method(
             red_black_tree<tkey, tvalue> *tree,
             typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy);
@@ -140,8 +140,8 @@ private:
         void balance(
                 std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
 
-        virtual void identify_deleted_node(
-                node* node_to_dispose);
+        void identify_deleted_node(
+                typename binary_search_tree<tkey, tvalue>::node *node_to_dispose) override;
 
         void call_small_rotation(
                 typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
@@ -150,11 +150,11 @@ private:
         void call_big_rotation(
                 typename binary_search_tree<tkey, tvalue>::node** node_to_rotate,
                 bool left) const;
-        
+
     };
 
 public:
-    
+
     explicit red_black_tree(
         std::function<int(tkey const &, tkey const &)> comparer,
         allocator *allocator = nullptr,
@@ -163,18 +163,18 @@ public:
         typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy = binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
 
 public:
-    
+
     ~red_black_tree() noexcept final = default;
-    
+
     red_black_tree(
         red_black_tree<tkey, tvalue> const &other);
-    
+
     red_black_tree<tkey, tvalue> &operator=(
         red_black_tree<tkey, tvalue> const &other);
-    
+
     red_black_tree(
         red_black_tree<tkey, tvalue> &&other) noexcept;
-    
+
     red_black_tree<tkey, tvalue> &operator=(
         red_black_tree<tkey, tvalue> &&other) noexcept;
 
@@ -214,7 +214,7 @@ private:
             node_color color) noexcept;
 
     inline std::string get_typename() const noexcept;
-    
+
 };
 
 #pragma region node implementation
@@ -359,8 +359,8 @@ template<
 void red_black_tree<tkey, tvalue>::insertion_template_method::balance(
         std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
-//    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called")
-//            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): called");
+    this->trace_with_guard("red_black_tree<tkey, tvalue>::insertion_template_method::insertion_template_method::balance(std::stack<node**>): called")
+            ->debug_with_guard("red_black_tree<tkey, tvalue>::insertion_template_method::insertion_template_method::balance(std::stack<node**>): called");
 
     typename binary_search_tree<tkey, tvalue>::node **cur;
     typename binary_search_tree<tkey, tvalue>::node **parent;
@@ -443,8 +443,8 @@ void red_black_tree<tkey, tvalue>::insertion_template_method::balance(
         reinterpret_cast<red_black_tree<tkey, tvalue>::node*>(*(path.top()))->_color = node_color::BLACK;
     }
 
-//    this->trace_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended")
-//            ->debug_with_guard(get_typename() + "::insertion_template_method::balance(std::stack<node**>): ended");
+    this->trace_with_guard("red_black_tree<tkey, tvalue>::insertion_template_method::insertion_template_method::balance(std::stack<node**>): ended")
+            ->debug_with_guard("red_black_tree<tkey, tvalue>::insertion_template_method::insertion_template_method::balance(std::stack<node**>): ended");
 }
 
 template<
@@ -470,15 +470,14 @@ template<
 void red_black_tree<tkey, tvalue>::disposal_template_method::balance(
         std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
-//    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called")
-//            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): called");
+    this->trace_with_guard("red_black_tree<tkey, tvalue>::disposal_template_method::balance(std::stack<node**>): called")
+            ->debug_with_guard("red_black_tree<tkey, tvalue>::disposal_template_method::balance(std::stack<node**>): called");
 
     // Red
     if (_deleted_color == node_color::RED)
     {
-        // TODO automatic log call
-//        this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
-//                ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
+        this->trace_with_guard("red_black_tree<tkey, tvalue>::disposal_template_method::balance(std::stack<node**>): ended")
+                ->debug_with_guard("red_black_tree<tkey, tvalue>::disposal_template_method::balance(std::stack<node**>): ended");
 
         return;
     }
@@ -488,7 +487,10 @@ void red_black_tree<tkey, tvalue>::disposal_template_method::balance(
     // not a leaf
     if (_deleted_has_children)
     {
-        set_color(*path.top(), node_color::BLACK);
+        if (*path.top() != nullptr)
+        {
+            set_color(*path.top(), node_color::BLACK);
+        }
     }
     // leaf
     else
@@ -514,16 +516,16 @@ void red_black_tree<tkey, tvalue>::disposal_template_method::balance(
                 left = true;
 
                 brother = &((*parent)->right_subtree);
-                nephew = &((*parent)->left_subtree);
-                opposite_nephew = &((*parent)->right_subtree);
+                nephew = &((*brother)->left_subtree);
+                opposite_nephew = &((*brother)->right_subtree);
             }
             else
             {
                 left = false;
 
                 brother = &((*parent)->left_subtree);
-                nephew = &((*parent)->right_subtree);
-                opposite_nephew = &((*parent)->left_subtree);
+                nephew = &((*brother)->right_subtree);
+                opposite_nephew = &((*brother)->left_subtree);
             }
 
             // brother is black
@@ -572,23 +574,21 @@ void red_black_tree<tkey, tvalue>::disposal_template_method::balance(
 
                 this->call_small_rotation(parent, left);
 
-                path.pop();
-                path.push(brother);
-                path.push(parent);
+                path.push(&(*parent)->left_subtree);
                 path.push(cur);
             }
         }
     }
 
-//    this->trace_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended")
-//            ->debug_with_guard(get_typename() + "::disposal_template_method::balance(std::stack<node**>): ended");
+    this->trace_with_guard("red_black_tree<tkey, tvalue>::disposal_template_method::balance(std::stack<node**>): ended")
+            ->debug_with_guard("red_black_tree<tkey, tvalue>::disposal_template_method::balance(std::stack<node**>): ended");
 }
 
 template<
         typename tkey,
         typename tvalue>
 void red_black_tree<tkey, tvalue>::disposal_template_method::identify_deleted_node(
-        red_black_tree::node *node_to_dispose)
+        typename binary_search_tree<tkey, tvalue>::node *node_to_dispose)
 {
     _deleted_color = get_color(node_to_dispose);
 
