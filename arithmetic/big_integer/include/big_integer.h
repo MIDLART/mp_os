@@ -9,6 +9,9 @@
 #include <allocator_guardant.h>
 #include <not_implemented.h>
 
+//#include <logger.h>
+//#include <logger_guardant.h>
+
 class big_integer final:
     allocator_guardant
 {
@@ -166,8 +169,13 @@ private:
     int _oldest_digit;
     unsigned int *_other_digits;
     allocator *_allocator;
+    //TODO logger
 
 public:
+
+    big_integer(
+            int digit,
+            allocator *allocator);
 
     big_integer(
         int const *digits,
@@ -374,6 +382,58 @@ public:
 private:
 
     [[nodiscard]] allocator *get_allocator() const noexcept override;
+
+private:
+
+    big_integer &change_sign();
+
+    inline int get_digits_count() const noexcept;
+
+    inline int sign() const noexcept;
+
+    inline bool is_equal_to_zero() const noexcept;
+
+    inline unsigned int get_digit(
+            int position) const noexcept;
+
+private:
+
+    void clear();
+
+    void copy_from(
+            big_integer const &other);
+
+    void move_from(
+            big_integer &&other);
+
+private:
+
+    void initialize_from(
+            int const *digits,
+            size_t digits_count);
+
+    void initialize_from(
+            std::vector<int> const &digits,
+            size_t digits_count);
+
+    void initialize_from(
+            std::string const &value_as_string,
+            size_t base);
+
+private:
+
+    void print_byte(
+            std::ostream &stream,
+            unsigned char byte_value) const;
+
+    void dump_int_value(
+            std::ostream &stream,
+            int value) const;
+
+public:
+
+    void dump_value(
+            std::ostream &stream) const;
     
 };
 

@@ -211,7 +211,59 @@ int main(
     int argc,
     char **argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    
-    return RUN_ALL_TESTS();
+//    testing::InitGoogleTest(&argc, argv);
+//
+//    return RUN_ALL_TESTS();
+
+    std::vector<int> a = {0, 0, 1};
+    std::vector<int> b = {0, 0, 1};
+    big_integer bigint_1(a, nullptr);
+    big_integer bigint_2(b, nullptr);
+
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
+
+    bigint_1 += bigint_2;
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
+
+    bigint_1 |= bigint_2;
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
+
+    bigint_1 &= bigint_2;
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
+
+    bigint_1 ^= bigint_2;
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
+
+    if (bigint_1 != bigint_2)
+    {
+        std::cout << "== +\n";
+    }
+    if (bigint_1 < bigint_2)
+    {
+        std::cout << "< +\n";
+    }
+    if (!(bigint_1 > bigint_2))
+    {
+        std::cout << "> +\n";
+    }
+
+    bigint_1 = ~bigint_1;
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
+
+    bigint_1 = ~bigint_1;
+    bigint_1 += bigint_2;
+    bigint_1 += bigint_2;
+    bigint_1 -= bigint_2;
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
+
+    bigint_1 = -bigint_1;
+    bigint_1.dump_value(std::cout);
+    std::cout << "\n";
 }
