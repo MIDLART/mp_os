@@ -545,7 +545,7 @@ void red_black_tree<tkey, tvalue>::disposal_template_method::balance(
                 // nephew is red
                 else if (get_color(*nephew) == node_color::RED)
                 {
-                    set_color(*brother, node_color::BLACK);
+                    //set_color(*brother, node_color::BLACK);
                     set_color(*nephew, get_color(*parent));
                     set_color(*parent, node_color::BLACK);
 
@@ -592,15 +592,9 @@ void red_black_tree<tkey, tvalue>::disposal_template_method::identify_deleted_no
 {
     _deleted_color = get_color(node_to_dispose);
 
-    if (node_to_dispose->left_subtree != nullptr ||
-        node_to_dispose->right_subtree != nullptr)
-    {
-        _deleted_has_children = true;
-    }
-    else
-    {
-        _deleted_has_children = false;
-    }
+    _deleted_has_children = node_to_dispose->left_subtree != nullptr ||
+                            node_to_dispose->right_subtree != nullptr;
+    
 }
 
 template<
