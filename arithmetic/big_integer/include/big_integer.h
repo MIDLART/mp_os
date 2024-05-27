@@ -393,6 +393,8 @@ private:
 
     inline bool is_equal_to_zero() const noexcept;
 
+    inline bool is_equal_to_one() const noexcept;
+
     inline unsigned int get_digit(
             int position) const noexcept;
 

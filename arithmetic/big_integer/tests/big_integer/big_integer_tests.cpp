@@ -266,4 +266,85 @@ int main(
     bigint_1 = -bigint_1;
     bigint_1.dump_value(std::cout);
     std::cout << "\n";
+
+    std::cout << "\n";
+    std::vector<int> c = {INT_MAX};
+    std::vector<int> d = {256};
+    big_integer bigint_3(c, nullptr);
+    big_integer bigint_4(d, nullptr);
+    bigint_3.dump_value(std::cout);
+    std::cout << "\n";
+    bigint_4.dump_value(std::cout);
+    std::cout << "\n";
+    std::vector<int> f = {1};
+    big_integer bigint_5(f, nullptr);
+//    bigint_5.dump_value(std::cout);
+//    std::cout << "\n";
+
+    bigint_3 *= bigint_4;
+    bigint_3.dump_value(std::cout);
+    std::cout << "\n";
+
+    bigint_3 *= bigint_4;
+    bigint_3.dump_value(std::cout);
+    std::cout << "\n";
+
+    std::cout << "res: \n";
+    big_integer c1(std::vector<int>{8});
+    big_integer d1(std::vector<int>{2,3,1});
+    big_integer h = c1 * d1;
+    h.dump_value(std::cout);
+    std::cout << "\n\n";
+
+    h <<= 3;
+    h.dump_value(std::cout);
+    std::cout << "\n";
+    h <<= 32;
+    h.dump_value(std::cout);
+    std::cout << "\n";
+
+    h >>= 32;
+    h.dump_value(std::cout);
+    std::cout << "\n";
+    h >>= 3;
+    h.dump_value(std::cout);
+    std::cout << "\n";
+    std::cout << "\n";
+
+    big_integer div_1(std::vector<int>{1000});
+    big_integer div_2(std::vector<int>{10});
+    big_integer r = div_1 / div_2;
+    r.dump_value(std::cout);
+    std::cout << "\n";
+
+    r *= h;
+    r /= h;
+    r.dump_value(std::cout);
+    std::cout << "\n";
+
+    std::cout << "\n";
+    big_integer caaa(std::vector<int>{1,7,8,9});
+    big_integer daaa(std::vector<int>{2,3,1});
+    caaa.dump_value(std::cout);
+    std::cout << "\n";
+    big_integer ha = caaa * daaa;
+//    ha.dump_value(std::cout);
+//    std::cout << "\n";
+    ha /= daaa;
+    ha.dump_value(std::cout);
+    std::cout << "\n";
+    std::cout << (caaa == ha) << std::endl;
+    std::cout << "\n";
+
+    big_integer c123(std::vector<int>{1,7,8,9});
+    big_integer d123(std::vector<int>{2,3,1});
+    big_integer h123 = c123 / d123;
+    h123.dump_value(std::cout);
+    std::cout << "\n";
+
+    std::cout << "\n";
+    big_integer hf(std::vector<int>{1});
+    hf <<= 31;
+    hf.dump_value(std::cout);
+    std::cout << "\n";
 }

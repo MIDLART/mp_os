@@ -1,5 +1,6 @@
 #include <cstring>
 #include <limits>
+#include <algorithm>
 #include "../include/big_integer.h"
 
 big_integer &big_integer::trivial_multiplication::multiply(
@@ -550,7 +551,104 @@ big_integer big_integer::operator-(
 big_integer &big_integer::operator*=(
     big_integer const &other)
 {
-    throw not_implemented("big_integer &big_integer::operator*=(big_integer const &)", "your code should be here...");
+    if (other.is_equal_to_zero())
+    {
+        return *this = other;
+    }
+
+    if (is_equal_to_zero())
+    {
+        return *this;
+    }
+
+    if (other.is_equal_to_one())
+    {
+        return *this;
+    }
+
+    if (is_equal_to_one())
+    {
+        return *this = other;
+    }
+
+    if (sign() == -1 && other.sign() == -1)
+    {
+        change_sign();
+        *this *= -other;
+        return *this;
+    }
+    else if (sign() == -1)
+    {
+        change_sign();
+        *this *= other;
+        return change_sign();
+    }
+    else if (other.sign() == -1)
+    {
+        *this *= -other;
+        return change_sign();
+    }
+
+    unsigned int operation_result = 0;
+
+    auto const first_digits_count = get_digits_count();
+    auto const second_digits_count = other.get_digits_count();
+    auto const max_digits_count = first_digits_count + second_digits_count;
+
+    constexpr int shift = sizeof(unsigned int) << 2;
+    constexpr int mask = (1 << shift) - 1;
+
+    std::vector<int> result_digits(max_digits_count, 0);
+    std::vector<unsigned int> half_digits_result(2 * max_digits_count, 0);
+
+    for (int i = 0; i < 2 * first_digits_count; ++i)
+    {
+        unsigned int first_value_digit = get_digit(i/2);
+        unsigned int first = i & 1 ?
+                first_value_digit >> shift :
+                first_value_digit & mask;
+
+        for (int j = 0; j < 2 * second_digits_count; ++j)
+        {
+            unsigned int second_value_digit = other.get_digit(j/2);
+            unsigned int second = j & 1 ?
+                    second_value_digit >> shift :
+                    second_value_digit & mask;
+
+//            std::cout << first << "  " << second << std::endl;
+
+            operation_result += first * second;
+            half_digits_result[i + j] += (operation_result & mask);
+//            std::cout << operation_result << "  " << half_digits_result[i + j] << "  ";
+            operation_result >>= shift;
+//            std::cout << operation_result << std::endl;
+        }
+    }
+
+    for (int i = 0; i < max_digits_count; ++i)
+    {
+//        std::cout << half_digits_result[2 * i + 1] << "  " << half_digits_result[2 * i] << std::endl;
+        result_digits[i] = (half_digits_result[2 * i + 1] << shift) + half_digits_result[2 * i];
+    }
+
+    result_digits.back() += *reinterpret_cast<int *>(&operation_result);
+
+    while (result_digits.back() == 0)
+    {
+        result_digits.pop_back();
+    }
+
+    if (result_digits.back() & (1 << ((sizeof(int) << 3) - 1)))
+    {
+        result_digits.push_back(0);
+    }
+
+    auto result_digits_count = result_digits.size();
+
+    clear();
+    initialize_from(result_digits, result_digits_count);
+
+    return *this;
 }
 
 big_integer big_integer::operator*(
@@ -568,7 +666,125 @@ big_integer big_integer::operator*(
 big_integer &big_integer::operator/=(
     big_integer const &other)
 {
-    throw not_implemented("big_integer &big_integer::operator/=(big_integer const &)", "your code should be here...");
+    if (other.is_equal_to_zero())
+    {
+        throw std::logic_error("There was an attempt to divide by zero!");
+    }
+
+    if (is_equal_to_zero())
+    {
+        return *this;
+    }
+
+    if (other.is_equal_to_one())
+    {
+        return *this;
+    }
+
+    if (*this < other)
+    {
+        clear();
+        initialize_from(std::vector<int>{0}, 1);
+
+        return *this = other;
+    }
+
+    if (*this == other)
+    {
+        clear();
+        initialize_from(std::vector<int>{1}, 1);
+
+        return *this = other;
+    }
+
+    if (sign() == -1 && other.sign() == -1)
+    {
+        change_sign();
+        *this /= -other;
+        return *this;
+    }
+    else if (sign() == -1)
+    {
+        change_sign();
+        *this /= other;
+        return change_sign();
+    }
+    else if (other.sign() == -1)
+    {
+        *this /= -other;
+        return change_sign();
+    }
+
+    unsigned int operation_result = 0;
+    auto bit_count = (sizeof(int) * 8);
+
+    auto const first_digits_count = get_digits_count();
+    auto const second_digits_count = other.get_digits_count();
+
+//    constexpr int shift = sizeof(unsigned int) << 2;
+//    constexpr int mask = (1 << shift) - 1;
+
+    std::vector<int> result_digits(1, 0);
+    big_integer minuend(std::vector<int>{0});
+
+    for (int i = first_digits_count - 1; i >= 0; --i)
+    {
+        unsigned int first_value_digit = get_digit(i);
+
+        minuend <<= bit_count;
+        if ((1 << ((sizeof(int) << 3) - 1)) & first_value_digit)
+        {
+            minuend += big_integer (std::vector<int>{*reinterpret_cast<int*>(&first_value_digit), 0});
+        }
+        else
+        {
+            minuend += big_integer (std::vector<int>{*reinterpret_cast<int*>(&first_value_digit)});
+        }
+        big_integer subtrahend(std::vector<int>{0});
+
+        if (minuend >= other)
+        {
+            unsigned int digit = 0;
+
+            for (unsigned int k = 1 << (bit_count - 1); k > 0; k >>= 1)
+            {
+                big_integer tmp = other * big_integer(std::vector<int>({*reinterpret_cast<int *>(&k), 0}));
+
+                if (subtrahend + tmp <= minuend)
+                {
+                    subtrahend += tmp;
+                    digit += k;
+                }
+            }
+
+            minuend -= subtrahend;
+
+            result_digits.push_back(*reinterpret_cast<int*>(&digit));
+        }
+        else
+        {
+            result_digits.push_back(0);
+        }
+    }
+
+    std::reverse(result_digits.begin(), result_digits.end());
+
+    while (result_digits.back() == 0)
+    {
+        result_digits.pop_back();
+    }
+
+    if (result_digits.back() & (1 << ((sizeof(int) << 3) - 1)))
+    {
+        result_digits.push_back(0);
+    }
+
+    auto result_digits_count = result_digits.size();
+
+    clear();
+    initialize_from(result_digits, result_digits_count);
+
+    return *this;
 }
 
 big_integer big_integer::operator/(
@@ -627,9 +843,7 @@ big_integer &big_integer::operator&=(
 {
     if (other.is_equal_to_zero())
     {
-        clear();
-        std::vector<int> empty;
-        initialize_from(empty, 1);
+        *this = other;
         return *this;
     }
 
@@ -772,13 +986,53 @@ big_integer &big_integer::operator<<=(
         return *this;
     }
 
-    auto value_sign = sign();
-    if (value_sign == -1)
+    if (sign() == -1)
     {
         change_sign();
+        *this <<= shift;
+        return change_sign();
     }
 
-    //TODO
+    auto bit_count = (sizeof(int) * 8);
+    auto big_shift = shift / bit_count;
+    shift %= bit_count;
+
+    auto digits_count = get_digits_count();
+    std::vector<int> result_digits(digits_count + big_shift);
+
+    for (int i = 0; i < big_shift; ++i)
+    {
+        result_digits[i] = 0;
+    }
+
+    unsigned int remain = 0;
+
+    for (int i = 0; i < digits_count; ++i)
+    {
+        unsigned int value_digit = get_digit(i);
+
+        *reinterpret_cast<unsigned int *>(&result_digits[i + big_shift]) = (value_digit << shift) | remain;
+        remain = bit_count - shift == 32 ?
+                0 :
+                value_digit >> (bit_count - shift);
+//        remain = value_digit >> (bit_count - shift);
+//        std::cout << value_digit << "  " << bit_count - shift << "  " << remain << std::endl;
+    }
+
+    if (remain != 0)
+    {
+        result_digits.push_back(static_cast<int>(remain));
+    }
+
+    if (result_digits.back() & (1 << ((sizeof(int) << 3) - 1)))
+    {
+        result_digits.push_back(0);
+    }
+
+    auto result_digits_count = result_digits.size();
+
+    clear();
+    initialize_from(result_digits, result_digits_count);
 
     return *this;
 }
@@ -792,25 +1046,74 @@ big_integer big_integer::operator<<(
 big_integer big_integer::operator<<(
     std::pair<size_t, allocator *> const &shift) const
 {
-    throw not_implemented("big_integer big_integer::operator<<(std::pair<size_t, allocator *> const &) const", "your code should be here...");
+    return big_integer(0, shift.second) += big_integer(*this) <<= shift.first;
 }
 
 big_integer &big_integer::operator>>=(
     size_t shift)
 {
-    throw not_implemented("big_integer &big_integer::operator>>=(size_t)", "your code should be here...");
+    if (is_equal_to_zero() || shift == 0)
+    {
+        return *this;
+    }
+
+//    auto value_sign = sign();
+//    if (value_sign == -1)
+//    {
+//        change_sign();
+//    }
+
+    auto bit_count = (sizeof(int) * 8);
+    auto big_shift = shift / bit_count;
+    shift %= bit_count;
+
+    auto digits_count = get_digits_count();
+    if (digits_count <= big_shift)
+    {
+        clear();
+        initialize_from(std::vector<int>{0}, 1);
+
+        return *this;
+    }
+
+    std::vector<int> result_digits(digits_count - big_shift);
+
+    unsigned int remain = 0;
+
+    for (int i = static_cast<int>(big_shift); i < digits_count; ++i)
+    {
+        unsigned int value_digit = get_digit(i);
+
+        *reinterpret_cast<unsigned int *>(&result_digits[i - big_shift]) = (value_digit >> shift) | remain;
+//        remain = value_digit << (bit_count - shift);
+        remain = bit_count - shift == 32 ?
+                 0 :
+                 value_digit << (bit_count - shift);
+    }
+
+    while (result_digits.back() == 0)
+    {
+        result_digits.pop_back();
+    }
+
+    auto result_digits_count = result_digits.size();
+
+    clear();
+    initialize_from(result_digits, result_digits_count);
+
+    return *this;
 }
 
 big_integer big_integer::operator>>(
     size_t shift) const
 {
-    throw not_implemented("big_integer big_integer::operator>>(size_t) const", "your code should be here...");
+    return big_integer(*this) >>= shift;
 }
 
 big_integer big_integer::operator>>(
-    std::pair<size_t, allocator *> const &other) const
+    std::pair<size_t, allocator *> const &shift) const
 {
-    throw not_implemented("big_integer big_integer::operator>>(std::pair<size_t, allocator *> const &) const", "your code should be here...");
+    return big_integer(0, shift.second) += big_integer(*this) >>= shift.first;
 }
 
 big_integer &big_integer::multiply(
@@ -1010,4 +1313,9 @@ void big_integer::dump_value(
         dump_int_value(stream, *reinterpret_cast<int *>(&digit));
         stream << ' ';
     }
+}
+
+inline bool big_integer::is_equal_to_one() const noexcept
+{
+    return _oldest_digit == 1 && _other_digits == nullptr;
 }
