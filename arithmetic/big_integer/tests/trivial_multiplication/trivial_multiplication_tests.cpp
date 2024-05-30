@@ -173,4 +173,45 @@ int main(
     testing::InitGoogleTest(&argc, argv);
 
     return RUN_ALL_TESTS();
+
+    std::cout << "\n";
+    std::cout << "mult:\n";
+    big_integer bigint_1m("-28958888309635818");
+    big_integer bigint_2m("-234567");
+    std::cout << bigint_1m << std::endl;
+    std::cout << bigint_2m << std::endl;
+    bigint_1m.dump_value(std::cout);
+    std::cout << "\n";
+    bigint_2m.dump_value(std::cout);
+    std::cout << "\n";
+    bigint_1m *= bigint_2m;
+    std::cout << "6792799554126344920806" << std::endl;
+    std::cout << bigint_1m << std::endl;
+    bigint_1m.dump_value(std::cout);
+    std::cout << "\n";
+    big_integer bigint_1mm("6792799554126344920806");
+    bigint_1mm.dump_value(std::cout);
+    std::cout << "\n";
+//    big_integer t_r("55339950737562009600");
+//    t_r.dump_value(std::cout);
+//    std::cout << "\n";
+
+//    std::cout << "\n";
+//    std::cout << "mult:\n";
+//    big_integer bigint_1m("2423545763");
+//    big_integer bigint_2m("3657687978");
+//    std::cout << bigint_1m << std::endl;
+//    std::cout << bigint_2m << std::endl;
+//    bigint_1m.dump_value(std::cout);
+//    std::cout << "\n";
+//    bigint_2m.dump_value(std::cout);
+//    std::cout << "\n";
+//    bigint_1m *=bigint_2m;
+//    std::cout << "8864574201457937214" << std::endl;
+//    std::cout << bigint_1m << std::endl;
+//    bigint_1m.dump_value(std::cout);
+//    std::cout << "\n";
+//    big_integer bigint_1mm("8864574201457937214");
+//    bigint_1mm.dump_value(std::cout);
+//    std::cout << "\n";
 }

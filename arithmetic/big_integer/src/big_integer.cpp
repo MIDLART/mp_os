@@ -668,10 +668,13 @@ big_integer &big_integer::operator*=(
                     second_value_digit & mask;
 
             operation_result += first * second;
-            half_digits_result[i + j] = (half_digits_result[i + j] + operation_result);
+            half_digits_result[i + j] += operation_result;
             operation_result = half_digits_result[i + j] >> shift;
             half_digits_result[i + j] &= mask;
         }
+
+        half_digits_result[i + 2 * second_digits_count] = operation_result;
+        operation_result = 0;
     }
 
     for (int i = 0; i < max_digits_count; ++i)
@@ -679,7 +682,7 @@ big_integer &big_integer::operator*=(
         result_digits[i] = (half_digits_result[2 * i + 1] << shift) + half_digits_result[2 * i];
     }
 
-    result_digits.back() += *reinterpret_cast<int *>(&operation_result);
+//    result_digits.back() += *reinterpret_cast<int *>(&operation_result);
 
     while (result_digits.back() == 0)
     {
@@ -1312,7 +1315,26 @@ big_integer big_integer::multiply(
     allocator *allocator,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer big_integer::multiply(big_integer const &, big_integer const &, allocator *, big_integer::multiplication_rule)", "your code should be here...");
+    switch (multiplication_rule)
+    {
+        case multiplication_rule::trivial:
+        {
+//            return trivial_multiplication::multiply(first_multiplier, second_multiplier);
+            return first_multiplier * second_multiplier;
+        }
+        case multiplication_rule::Karatsuba:
+        {
+            break;
+        }
+        case multiplication_rule::SchonhageStrassen:
+        {
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
 }
 
 big_integer &big_integer::divide(
@@ -1322,7 +1344,25 @@ big_integer &big_integer::divide(
     big_integer::division_rule division_rule,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer &big_integer::divide(big_integer &, big_integer const &, allocator *, big_integer::division_rule, big_integer::multiplication_rule)", "your code should be here...");
+    switch (division_rule)
+    {
+        case division_rule::trivial:
+        {
+            return dividend /= divisor;
+        }
+        case division_rule::Newton:
+        {
+            break;
+        }
+        case division_rule::BurnikelZiegler:
+        {
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
 }
 
 big_integer big_integer::divide(
