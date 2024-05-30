@@ -211,9 +211,9 @@ int main(
     int argc,
     char **argv)
 {
-//    testing::InitGoogleTest(&argc, argv);
-//
-//    return RUN_ALL_TESTS();
+    testing::InitGoogleTest(&argc, argv);
+
+    return RUN_ALL_TESTS();
 
     std::vector<int> a = {0, 0, 1};
     std::vector<int> b = {0, 0, 1};
@@ -346,5 +346,31 @@ int main(
     big_integer hf(std::vector<int>{1});
     hf <<= 31;
     hf.dump_value(std::cout);
+    std::cout << "\n";
+
+    std::cout << "\n";
+    big_integer div_o1(std::vector<int>{100});
+    big_integer div_o2(std::vector<int>{33});
+    big_integer ost = div_o1 % div_o2;
+    ost.dump_value(std::cout);
+    std::cout << "\n";
+
+    std::cout << "\n";
+    std::cout << "mult:\n";
+    big_integer bigint_1m("2423545763");
+    big_integer bigint_2m("3657687978");
+    std::cout << bigint_1m << std::endl;
+    std::cout << bigint_2m << std::endl;
+    bigint_1m.dump_value(std::cout);
+    std::cout << "\n";
+    bigint_2m.dump_value(std::cout);
+    std::cout << "\n";
+    bigint_1m *=bigint_2m;
+    std::cout << "8864574201457937214" << std::endl;
+    std::cout << bigint_1m << std::endl;
+    bigint_1m.dump_value(std::cout);
+    std::cout << "\n";
+    big_integer bigint_1mm("8864574201457937214");
+    bigint_1mm.dump_value(std::cout);
     std::cout << "\n";
 }

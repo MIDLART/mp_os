@@ -169,13 +169,12 @@ private:
     int _oldest_digit;
     unsigned int *_other_digits;
     allocator *_allocator;
-    //TODO logger
 
 public:
 
     big_integer(
             int digit,
-            allocator *allocator);
+            allocator *allocator = nullptr);
 
     big_integer(
         int const *digits,
@@ -436,6 +435,19 @@ public:
 
     void dump_value(
             std::ostream &stream) const;
+
+private:
+
+    static std::pair<big_integer, big_integer> division_with_remainder(
+            big_integer const &divisible,
+            big_integer const &divisor);
+
+private:
+
+    unsigned int char_to_int(
+            char ch);
+
+    std::string to_string() const;
     
 };
 
