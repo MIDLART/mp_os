@@ -668,59 +668,18 @@ big_integer &big_integer::operator*=(
                     second_value_digit & mask;
 
             operation_result += first * second;
-            half_digits_result[i + j] += (operation_result & mask);
-            operation_result >>= shift;
+            half_digits_result[i + j] = (half_digits_result[i + j] + operation_result);
+            operation_result = half_digits_result[i + j] >> shift;
+            half_digits_result[i + j] &= mask;
         }
     }
 
-    constexpr auto left_max = UINT_MAX >> shift;
-    constexpr auto right_max = 1 << shift;
-    unsigned int left;
-    unsigned int right;
-
     for (int i = 0; i < max_digits_count; ++i)
     {
-//        std::cout << half_digits_result[2 * i + 1] << "  " << half_digits_result[2 * i] << std::endl;
-//        auto tmp_1 = half_digits_result[2 * i + 1] / left_max;
-//        if (tmp_1)
-//        {
-//            left = half_digits_result[2 * i + 1] % left_max;
-//            half_digits_result[2 * (i + 1)] += tmp_1;
-//
-//            //std::cout << " _1 " << std::endl;
-//        }
-//        else
-//        {
-//            left = half_digits_result[2 * i + 1];
-//
-//            //std::cout << " _2 " << std::endl;
-//        }
-//
-//        left <<= shift;
-//
-//        if (tmp_1 * right_max > left)
-//        {
-//            half_digits_result[2 * (i + 1)] -= 1;
-//            left += UINT_MAX - tmp_1 * right_max + 1;
-//
-//            //std::cout << " _3 " << std::endl;
-//        }
-//        else
-//        {
-//            left -= tmp_1 * right_max;
-//
-//            //std::cout << " _4 " << std::endl;
-//        }
-//
-//        right = half_digits_result[2 * i];
-
         result_digits[i] = (half_digits_result[2 * i + 1] << shift) + half_digits_result[2 * i];
-//        *reinterpret_cast<unsigned int *>(&result_digits[i]) = left + right;
     }
 
     result_digits.back() += *reinterpret_cast<int *>(&operation_result);
-
-    std::cout << "_"<< operation_result << std::endl;
 
     while (result_digits.back() == 0)
     {
